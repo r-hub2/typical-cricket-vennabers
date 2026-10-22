@@ -66,13 +66,17 @@ testthat::test_that("linear Tailor preserves public workflow and IVAR/CVAR parit
           close(value, mean, s)
         }
       } else close(as.matrix(actual$details[c("prediction", "lower", "upper")]), as.matrix(expected), s)
+      # Rows of d are calibration points, so their scores are knots, where BLAS
+      # rounding that depends on the row count (ATLAS) moves them across the step.
+      query <- data.frame(x = .5)
+      batch <- venn_abers_details(fit, rbind(d["x"], query))$prediction$.pred[nrow(d) + 1L]
       for (n in 0:1) {
         calls$n <- 0L
-        small <- venn_abers_details(fit, d[seq_len(n), "x", drop = FALSE])
+        small <- venn_abers_details(fit, query[seq_len(n), , drop = FALSE])
         testthat::expect_identical(calls$n, if (n) length(state$models) else 0L)
         testthat::expect_identical(names(small$details), names(actual$details))
         testthat::expect_identical(nrow(small$prediction), n)
-        if (n) close(small$prediction$.pred, actual$prediction$.pred[1L], s)
+        if (n) close(small$prediction$.pred, batch, s)
       }
       for (type in c("conf_int", "pred_int")) testthat::expect_error(predict(fit, d, type = type), "type")
     }
