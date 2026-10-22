@@ -1,0 +1,38 @@
+{
+  "commit": "0e7b4bc575ce230134576ba1c76688d46bf99ac7",
+  "module_sha256": "ea7816e8832eef3f0fa129d2bb80dffae4efcb785f37f083fc087136edb720a5",
+  "release_sdist_sha256": "a6bf5383e618ce42d0ecb2335bba0d6b104ecbe979041f10019b57572364bc69",
+  "python": "3.14.6",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "versions": {
+    "venn-abers": "1.5.4",
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0"
+  },
+  "seed": 20260907,
+  "cases": 33,
+  "classes": [
+    2,
+    3,
+    4
+  ],
+  "precision": [
+    null,
+    0,
+    2,
+    -1
+  ],
+  "loss": [
+    "log",
+    "brier"
+  ],
+  "scope": "Manual log OvO; binary reference components plus independent Brier coupling. R zero-pair and rounding differences tested separately.",
+  "fixture_sha256": {
+    "ovo-calibration.csv": "a2d2b9c8c4a8e2bafdb0d10eccb9ac55a0d49aa012f6c1e5a27be69bd9ed5336",
+    "ovo-input.csv": "fc448fd4201790e97ab81f547ad8ac885197e6123cd25eaae733baf93a774951",
+    "ovo-output.csv": "2f87f2c2e17f13ab07672fd5bd07491f194aa480399a61d5e061671e7f00d270",
+    "ovo-pairs.csv": "f0165b89a2f467b2425a0d9e2f03a565c0d4f92b4651f65badb75a30b2b5f332"
+  }
+}

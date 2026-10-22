@@ -1,0 +1,31 @@
+{
+  "commit": "0e7b4bc575ce230134576ba1c76688d46bf99ac7",
+  "source_version": "1.5.4",
+  "module_sha256": "ea7816e8832eef3f0fa129d2bb80dffae4efcb785f37f083fc087136edb720a5",
+  "seed": 20260907,
+  "python": "3.14.6",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.0",
+    "pandas": "3.0.5"
+  },
+  "options": {
+    "setting": "regression",
+    "precision": null,
+    "shuffle": false,
+    "stratify": null
+  },
+  "cases": 116,
+  "rows": 1436,
+  "direct_valid_rows": 1099,
+  "direct_defect_rows": 337,
+  "lower_reference": "Negated regression upper endpoint on reflected scores and negated lower-moderated targets",
+  "point_reference": "Formula 6 on valid component endpoints; direct VennAbersCV merger also retained wherever valid",
+  "fixture_sha256": {
+    "regression-calibration.csv": "8a468eabc2cba93e363a09aaac4957ce2e949001a62eb77eb9ad89a713a8927f",
+    "regression-options.csv": "e7202e99e1c6e8d0c64bd73b0560fb130f7052ec57122b712f8a6392685422af",
+    "regression-predictions.csv": "6bbbfbeaaf06339f86006d6aa528c83d35d4bcef7d23f113ae4776b669578228"
+  }
+}

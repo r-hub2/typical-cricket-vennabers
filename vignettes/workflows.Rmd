@@ -1,0 +1,338 @@
+---
+title: "Training and freezing calibrated workflows"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Training and freezing calibrated workflows}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+# The code needs optional packages from Suggests; without them it is shown
+# but not run.
+required <- c("parsnip", "workflows", "hardhat", "rsample", "recipes", "rlang",
+              "tibble", "withr", "generics", "tidyselect", "rpart")
+unavailable <- required[!vapply(required, requireNamespace, logical(1),
+                                quietly = TRUE)]
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+                      eval = length(unavailable) == 0)
+```
+
+```{r missing-packages, eval=length(unavailable) > 0, echo=FALSE, results="asis"}
+cat("> **Note:** The code in this vignette was not run because these",
+    "suggested packages are not installed:",
+    paste0("`", unavailable, "`", collapse = ", "), "\n")
+```
+
+The workflow interfaces retain preprocessing, the predictive model and the
+Venn-Abers calibrator together. Choose the entry point based on whether the
+model has already been trained:
+
+| Starting point | Function | What it learns |
+|:---------------|:---------|:---------------|
+| Unfitted tidymodels workflow | `calibrated_workflow()` followed by `generics::fit()` | Local recipes, models and Inductive or Cross calibrators |
+| Already fitted workflow | `calibrate_workflow()` | An Inductive calibrator on new calibration data |
+
+These optional interfaces require `parsnip`, `workflows`, `hardhat`, `rsample`,
+`recipes`, `rlang`, `tibble`, `withr`, `generics` and `tidyselect`, at the minimum
+versions in `DESCRIPTION` or newer supported versions. The multiclass examples
+also use `rpart`. The manual functions in
+`vignette("manual-calibration", package = "vennabers")` need none of these.
+All examples here use local data and fixed seeds.
+
+## Choose a learning path
+
+Start with the [complete binary workflow](#a-complete-binary-workflow): prepare
+development data, define the base workflow, fit, predict and inspect the result.
+Then continue with the task you need:
+
+- [Cross calibration and prediction models](#cross-matched-models-and-full-model-transfer)
+- [Multiclass training](#multiclass-calibration-method-versus-model-training) or
+  [regression](#regression-workflows)
+- [Calibrating an already fitted model](#frozen-workflows-calibrate-without-retraining)
+- [Learning a postprocessor](#learning-a-postprocessor-before-venn-abers)
+- [Fixed engine options and early stopping](#engine-options-and-model-internal-validation)
+- Your own fit and predict functions as the model: `?model_adapter` and the
+  installed example `model-adapter.R`
+- Parameter selection and final assessment in
+  `vignette("tuning", package = "vennabers")`
+
+Keep `?calibrated_workflow` beside this guide for argument defaults.
+`?workflow_training`, `?workflow_postprocessing`, `?venn_abers_details` and
+`?venn_abers_tuning` hold the detailed contracts for each topic.
+
+## A complete binary workflow
+
+Hold out assessment data before constructing the procedure. Workflow
+classification needs factor truth; the first level is the binary event by
+default. Set `event_level = "second"` if the second level is your event.
+
+```{r data}
+library(vennabers)
+set.seed(12)
+data <- data.frame(x = rnorm(240))
+data$truth <- factor(ifelse(runif(240) < plogis(data$x), "yes", "no"),
+                     levels = c("yes", "no"))
+development <- data[1:200, ]
+assessment <- data[201:240, ]
+new_data <- assessment["x"]
+```
+
+Put learned preprocessing inside the **unprepared** base recipe. Do not
+normalize or impute the entire development set first: the calibration rows
+must be excluded from learning those quantities too.
+
+```{r inductive}
+recipe <- recipes::recipe(truth ~ x, data = development) |>
+  recipes::step_impute_median(recipes::all_numeric_predictors()) |>
+  recipes::step_normalize(recipes::all_numeric_predictors())
+base <- workflows::workflow() |>
+  workflows::add_recipe(recipe) |>
+  workflows::add_model(parsnip::logistic_reg(engine = "glm"))
+
+spec <- calibrated_workflow(base, outcome = "truth",
+                            calibration_prop = .3, seed = 42)
+fitted <- generics::fit(spec, development)
+probability <- predict(fitted, new_data, type = "prob")
+head(probability)
+head(predict(fitted, new_data, type = "class"))
+brier_score(assessment$truth == "yes", probability$.pred_yes)
+```
+
+Here 30% of the development data calibrates the model trained on the remaining
+70%. The constructor returns a trainable workflow; `fit()` performs the split
+and learning. Predictions use raw predictors and include named `.pred_yes`
+and `.pred_no` probability columns. For trainable classification workflows,
+the default prediction type is class, so request `type = "prob"` explicitly.
+
+```{r details}
+details <- venn_abers_details(fitted, new_data)
+head(details$details)
+stopifnot(identical(probability, details$prediction))
+```
+
+`details$prediction` holds final probabilities. `details$details` identifies
+each calibration fold, event, source model and binary bounds. Use
+`loss = "brier"` in `predict()` or `venn_abers_details()` to override the stored
+classification loss without learning again. Choosing the loss from data still
+requires separate selection rows.
+
+## Cross, matched models and full-model transfer
+
+```{r cross}
+cross_spec <- calibrated_workflow(base, "truth", method = "cross", v = 3,
+                                  seed = 42)
+cross_fit <- generics::fit(cross_spec, development)
+head(predict(cross_fit, new_data, type = "prob"))
+head(venn_abers_details(cross_fit, new_data)$details)
+```
+
+Cross fits one complete base workflow per fold complement. The default
+`prediction_model = "matched"` retains those same workflows for new predictions.
+`v` is a Cross option; `calibration_prop` is an Inductive option. For sizes set
+independently, as with sklearn's `train_size`/`test_size`, use
+`training_size` and `calibration_size`; rows in neither set are learned only by
+a full prediction model (installed example `inductive-sizes.R`). Classification
+splits are stratified by outcome by default; regression splits are unstratified.
+
+`prediction_model = "full"` fits one additional complete workflow on the
+permitted local fit data and uses its predictions with the unchanged held-out
+calibrators. Without postprocessing or tuning, matched/full Inductive costs
+one/two model fits, and matched/full Cross with K folds costs K/K+1 fits.
+Full mode retains only the additional prediction model. This transfer does
+not automatically inherit split-calibration guarantees.
+
+Automatic splitting cannot undo leakage from earlier feature engineering or
+parameter selection. For prescribed splits, pass a local `rsplit` (Inductive),
+an unrepeated `rset` (Cross), or a function `splits = function(data) ...`.
+Provider functions must build plans from their argument, because outer
+resampling and tuning give them different local rows. Explicit plans cannot be
+combined with explicit `calibration_prop`, `v` or `strata`; see
+`?local_calibration_splits` for reusable prepared plans.
+
+## Multiclass: calibration method versus model training
+
+OvO/OvR selects how probabilities are calibrated. Separately,
+`model_training = "shared"` uses one multiclass model per training split;
+`model_training = "pairwise"` trains separate two-class models and is available
+only for OvO. Shared OvO does not train pairwise models.
+
+```{r multiclass}
+set.seed(33)
+iris_split <- rsample::initial_split(iris, prop = .8, strata = Species)
+iris_dev <- rsample::analysis(iris_split)
+iris_test <- rsample::assessment(iris_split)
+tree <- workflows::workflow() |>
+  workflows::add_formula(Species ~ .) |>
+  workflows::add_model(parsnip::decision_tree(mode = "classification",
+                                             engine = "rpart"))
+for (classification in c("ovo", "ovr")) {
+  multi_fit <- calibrated_workflow(tree, "Species",
+    classification = classification, method = "cross", v = 3, seed = 33) |>
+    generics::fit(iris_dev)
+  print(head(predict(multi_fit, iris_test, type = "prob"), 2))
+}
+
+pair_fit <- calibrated_workflow(tree, "Species", classification = "ovo",
+  model_training = "pairwise", seed = 33) |>
+  generics::fit(iris_dev)
+head(venn_abers_details(pair_fit, iris_test)$details)
+```
+
+Both paths produce final class probabilities. Diagnostics describe binary
+class pairs or classes against the rest; they are not multiclass intervals.
+Shared Cross uses a common fold plan; pairwise Cross creates plans within each
+class pair. A global multiclass plan is not a valid pair-specific plan.
+
+## Regression workflows
+
+Mode comes from the base model. A numeric outcome, including numeric 0/1,
+remains regression. Omit classification-only options such as `classification`,
+`event_level`, `precision` and `loss`, including their explicit defaults.
+
+```{r regression}
+set.seed(52)
+regression <- data.frame(x = rnorm(240))
+regression$truth <- 2 * regression$x + rnorm(240, sd = .7)
+reg_base <- workflows::workflow() |>
+  workflows::add_formula(truth ~ x) |>
+  workflows::add_model(parsnip::linear_reg(engine = "lm"))
+reg_fit <- calibrated_workflow(reg_base, "truth", method = "cross", v = 3,
+                               m = 1, seed = 52) |>
+  generics::fit(regression[1:200, ])
+head(predict(reg_fit, regression[201:240, "x", drop = FALSE]))
+head(venn_abers_details(reg_fit, regression[201:240, ])$aggregate)
+```
+
+Use the default `method = "inductive"` for IVAR. Each calibration fold must
+have at least three rows for `m = 1`, or enough rows for the requested `m` or
+`epsilon`. Cross returns `.pred` points and, through details, descriptive mean
+bounds. `epsilon` is moderation, not an interval error rate. Neither regression
+mode provides confidence or prediction intervals.
+
+## Frozen workflows: calibrate without retraining
+
+Suppose a workflow was fitted earlier and its complete prediction path must
+remain fixed. Supply fresh calibration data to `calibrate_workflow()`:
+
+```{r frozen}
+earlier <- generics::fit(base, development[1:120, ])
+frozen <- calibrate_workflow(earlier, development[121:200, ], outcome = "truth")
+head(predict(frozen, new_data, type = "prob"))
+head(venn_abers_details(frozen, new_data)$details)
+```
+
+Only the calibrator learns. The retained recipe, engine and any existing
+postprocessor are used through the original workflow's complete prediction
+path. Give it raw data in the learned format; do not pre-bake a recipe or pass
+an extracted engine. Calibration rows must have been excluded from all prior
+training, preprocessing, postprocessing and selection. The package cannot
+verify that history.
+
+Frozen adoption supports binary, OvO/OvR and regression Inductive calibration.
+For a fitted multiclass workflow, choose `classification = "ovo"` or `"ovr"`;
+for regression, supply `m` or `epsilon` as needed and omit classification
+options. It does not perform Cross calibration, full-model transfer or tuning.
+The result is already fitted and is not an input to `tune::fit_resamples()`.
+
+Save the complete predictor for later use:
+
+```{r serialization}
+path <- tempfile(fileext = ".rds")
+saveRDS(frozen, path)
+restored <- readRDS(path)
+stopifnot(identical(predict(frozen, new_data, type = "prob"),
+                    predict(restored, new_data, type = "prob")))
+unlink(path)
+```
+
+In a new R process, load `vennabers`, `workflows` and the required engine
+packages. Pure R engines such as this GLM support this round trip; engines
+holding external resources retain their own serialization requirements.
+
+## Learning a postprocessor before Venn-Abers
+
+Trainable workflows can learn an additional postprocessor. The local model
+training domain is split into B for recipe/engine learning and P for
+postprocessing, with C still reserved for Venn-Abers calibration:
+
+```{r postprocessing}
+sigmoid_fit <- calibrated_workflow(base, "truth", seed = 42,
+  postprocessing = list(method = "sigmoid", strategy = "holdout", prop = .3,
+                        sigmoid_input = "probability")) |>
+  generics::fit(development)
+head(predict(sigmoid_fit, new_data, type = "prob"))
+```
+
+Here `prop` reserves 30% of the local training domain for P, not 30% of the
+entire development data. Sigmoid supports binary and pairwise OvO workflows;
+`sigmoid_input = "glm_link"` selects binomial GLM logit inputs instead.
+
+Other fixed methods are `tailor_logistic` (binary, pairwise OvO or shared
+two-class models), `tailor_multinomial` (shared OvO/OvR with at least three
+classes), and `tailor_linear` or `isotonic_numeric` (regression). Tailor methods
+need `tailor` and `probably`; Sigmoid and reference isotonic do not. Tailor's
+multinomial P fit has a fixed 100-iteration limit and fails the composition if
+it does not converge; changing the B engine's `maxit` does not change that limit.
+
+With `strategy = "ensemble", v = 3`, omit `prop`: three complete B/P pairs are
+retained and their finished predictions are averaged before VA calibration.
+Full-model mode trains an additional complete B/P composition. See
+`?workflow_postprocessing` for supported combinations and diagnostics.
+
+## Engine options and model-internal validation
+
+Fixed model options belong in the base workflow's model specification, as main
+arguments or `parsnip::set_engine()` arguments. They travel with the base
+workflow, so every local fit uses them on its own rows. `calibrated_workflow()`
+and `fit()` take no extra fit arguments, and there is no interface for
+separately supplied validation data.
+
+An engine's internal validation, such as native XGBoost early stopping, splits
+its share from the prepared rows of each local fit. A recipe in the base
+workflow is learned on all of those rows first. xgboost is not a vennabers
+dependency, so this chunk is not run:
+
+```{r early-stopping, eval=FALSE}
+spec <- parsnip::boost_tree(mode = "classification", trees = 100L, stop_iter = 10L) |>
+  parsnip::set_engine("xgboost", validation = 0.2)
+boosted <- workflows::workflow() |>
+  workflows::add_formula(truth ~ .) |>
+  workflows::add_model(spec)
+fitted <- calibrated_workflow(boosted, "truth", seed = 42) |>
+  generics::fit(development)
+```
+
+| Local fit | Rows for learning and internal validation |
+|:----------|:------------------------------------------|
+| Inductive or Cross source | Its analysis rows, or their B with postprocessing; never C |
+| Class pair | The analysis rows of that pair with its two original levels |
+| Full1 | All local fit rows (F), or its own B with postprocessing |
+| Search candidate | Its local training rows; held-out rows stay out |
+| Frozen workflow | None: no base training, only calibration |
+
+P trains only the postprocessor, and outer assessment rows never reach a fit.
+An invalid setting fails the whole fit with its fold, pair or B/P context.
+Internal validation is not an independent assessment of the procedure. No
+support is promised for observation weights, offsets or an external
+`eval_set`. The installed example `engine-options.R` runs fixed rpart options.
+
+## Names, assessment and next steps
+
+Reserved outcome or class names can be handled with `venn_abers_schema()`:
+create the schema before training, encode data with `venn_abers_encode()`,
+build the workflow on encoded names, pass the same schema to the constructor,
+and decode results with `venn_abers_decode()`. A new schema cannot rename an
+already fitted workflow; frozen adoption must retain its original schema.
+
+For unbiased assessment of the complete trainable procedure, resample the
+**outer calibrated workflow**, so preprocessing and calibration are relearned
+inside each outer analysis set. The next vignette,
+`vignette("tuning", package = "vennabers")`, shows native resampling, joint and
+two-stage selection, and an untouched final assessment split.
+
+For the complete standalone scripts with a contents list, open
+`vignette("examples-workflows", package = "vennabers")`.
+`?vennabers_examples` indexes all four example collections.

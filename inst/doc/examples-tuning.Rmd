@@ -1,0 +1,110 @@
+---
+title: "Example scripts: Grid and Bayes selection"
+description: "Local Grid/Bayes searches for binary, multiclass, pairwise and regression workflows with postprocessing."
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Example scripts: Grid and Bayes selection}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Select recipe, model and calibration settings using local searches, then assess
+the complete procedure on independent data. Install the optional workflow
+packages plus `tune`, `dials` and `yardstick`; postprocessing examples also use
+the dependencies named in their scripts.
+
+Start with `vignette("tuning", package = "vennabers")` for the
+step-by-step guide. `?vennabers_examples` indexes all four example collections.
+
+## Choose an example
+
+- [Binary Grid selection](#binary-grid)
+- [Shared multiclass Grid selection](#shared-multiclass-grid)
+- [Shared multiclass Bayes selection](#shared-multiclass-bayes)
+- [Pairwise OvO Grid selection](#pairwise-grid)
+- [Pairwise OvO Bayes selection](#pairwise-bayes)
+- [Regression Grid selection](#regression-grid)
+- [Regression Bayes selection](#regression-bayes)
+- [Grid selection with postprocessing](#postprocessing-grid)
+- [Bayes selection with postprocessing](#postprocessing-bayes)
+
+## Running an example
+
+Each heading below names an installed script. To inspect and run one:
+
+```{r run-example, eval=FALSE, purl=FALSE}
+script <- system.file("examples", "binary-grid.R", package = "vennabers")
+file.show(script)
+source(script)
+```
+
+Replace the filename to run another script. The listings below show the complete
+code without executing it during documentation builds. Sourcing a script runs
+its fits and checks; resampling, tuning and composition matrices can take longer
+than the introductory guides.
+
+## Binary Grid selection {#binary-grid}
+
+`binary-grid.R`: Compare joint and two-stage selection while preserving independent assessment data.
+
+```{r binary-grid, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "binary-grid.R", package = "vennabers"))}
+```
+
+## Shared multiclass Grid selection {#shared-multiclass-grid}
+
+`shared-multiclass-grid.R`: Select complete shared OvO/OvR procedures using joint or two-stage Grid searches.
+
+```{r shared-multiclass-grid, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "shared-multiclass-grid.R", package = "vennabers"))}
+```
+
+## Shared multiclass Bayes selection {#shared-multiclass-bayes}
+
+`shared-multiclass-bayes.R`: Select complete OvO/OvR class matrices with local stepwise Bayes searches.
+
+```{r shared-multiclass-bayes, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "shared-multiclass-bayes.R", package = "vennabers"))}
+```
+
+## Pairwise OvO Grid selection {#pairwise-grid}
+
+`pairwise-grid.R`: Search local class-pair grids and select using coupled class predictions.
+
+```{r pairwise-grid, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "pairwise-grid.R", package = "vennabers"))}
+```
+
+## Pairwise OvO Bayes selection {#pairwise-bayes}
+
+`pairwise-bayes.R`: Run local pair searches and assess the complete coupled predictor.
+
+```{r pairwise-bayes, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "pairwise-bayes.R", package = "vennabers"))}
+```
+
+## Regression Grid selection {#regression-grid}
+
+`regression-grid.R`: Select IVAR/CVAR model and moderation settings with joint or two-stage searches.
+
+```{r regression-grid, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "regression-grid.R", package = "vennabers"))}
+```
+
+## Regression Bayes selection {#regression-bayes}
+
+`regression-bayes.R`: Search IVAR/CVAR settings locally while keeping assessment observations untouched.
+
+```{r regression-bayes, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "regression-bayes.R", package = "vennabers"))}
+```
+
+## Grid selection with postprocessing {#postprocessing-grid}
+
+`postprocessing-grid.R`: Run separate B-local searches for classification and regression compositions, excluding P, C and assessment data.
+
+```{r postprocessing-grid, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "postprocessing-grid.R", package = "vennabers"))}
+```
+
+## Bayes selection with postprocessing {#postprocessing-bayes}
+
+`postprocessing-bayes.R`: Inspect local search budgets, complete candidate histories and recorded failures across learned compositions.
+
+```{r postprocessing-bayes, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "postprocessing-bayes.R", package = "vennabers"))}
+```

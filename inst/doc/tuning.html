@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Tuning and assessing the complete procedure</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Tuning and assessing the complete
+procedure</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#data-roles-and-search-strategies" id="toc-data-roles-and-search-strategies">Data roles and search
+strategies</a></li>
+<li><a href="#joint-grid-selection" id="toc-joint-grid-selection">Joint
+Grid selection</a></li>
+<li><a href="#two-stage-grid-selection" id="toc-two-stage-grid-selection">Two-stage Grid selection</a></li>
+<li><a href="#a-small-bayes-model-search" id="toc-a-small-bayes-model-search">A small Bayes model search</a></li>
+<li><a href="#outer-resampling-and-final-assessment" id="toc-outer-resampling-and-final-assessment">Outer resampling and
+final assessment</a></li>
+<li><a href="#extending-the-same-pattern" id="toc-extending-the-same-pattern">Extending the same pattern</a></li>
+</ul>
+</div>
+
+<p>Tuning must preserve the separation between model learning,
+calibration, parameter selection and assessment.
+<code>calibrated_workflow()</code> accepts local Grid and Bayes searches
+for binary, shared OvO/OvR, pairwise OvO and regression procedures. This
+vignette builds on
+<code>vignette(&quot;workflows&quot;, package = &quot;vennabers&quot;)</code>; it
+additionally requires <code>tune</code>, <code>dials</code> and
+<code>yardstick</code>. The deliberately small searches keep the
+examples runnable during a package build; use larger budgets for real
+work.</p>
+<div id="data-roles-and-search-strategies" class="section level2">
+<h2>Data roles and search strategies</h2>
+<p>Reserve final assessment data first. When tuning calibration options,
+the procedure also reserves selection rows S and final-fit rows F
+<strong>within the data supplied to fit</strong>. S chooses calibration
+settings and never rejoins F. Each model search sees only its permitted
+local training data, excluding its VA calibration rows. Outer assessment
+is excluded from every inner operation.</p>
+<table>
+<colgroup>
+<col width="16%" />
+<col width="45%" />
+<col width="38%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Strategy</th>
+<th align="left">Model-parameter criterion</th>
+<th align="left">Calibration selection</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>&quot;joint&quot;</code></td>
+<td align="left">Score complete calibrated predictions</td>
+<td align="left">Select the complete procedure</td>
+</tr>
+<tr class="even">
+<td align="left"><code>&quot;two_stage&quot;</code></td>
+<td align="left">First score the raw model predictions</td>
+<td align="left">Then select calibration settings</td>
+</tr>
+</tbody>
+</table>
+<p>Both strategies keep the same data exclusions. Each Cross source
+model runs its own local search. With
+<code>prediction_model = &quot;full&quot;</code>, the additional full model runs
+its own search too; it does not inherit or average fold choices.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">19</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rnorm</span>(<span class="dv">800</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>data<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(<span class="fu">runif</span>(<span class="dv">800</span>) <span class="sc">&lt;</span> <span class="fu">plogis</span>(.<span class="dv">5</span> <span class="sc">*</span> data<span class="sc">$</span>x),</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>                            <span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>), <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>split <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">initial_split</span>(data, <span class="at">prop =</span> .<span class="dv">8</span>, <span class="at">strata =</span> truth)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>development <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">analysis</span>(split)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>recipe <span class="ot">&lt;-</span> recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> development) <span class="sc">|&gt;</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  recipes<span class="sc">::</span><span class="fu">step_poly</span>(x, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipe) <span class="sc">|&gt;</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="co"># Always construct resamples from the supplied local data.</span></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(data, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>}</span></code></pre></div>
+<p><code>tune(&quot;degree&quot;)</code> names the parameter ID. Grid columns must
+match these IDs, which must be unique across recipe, model and
+calibration settings. The ID <code>id</code> is reserved by native tune.
+Never close over the full development data inside a resampling
+callback.</p>
+</div>
+<div id="joint-grid-selection" class="section level2">
+<h2>Joint Grid selection</h2>
+<p>Tune polynomial degree and the calibration regularization rule. There
+are two model candidates and two calibration candidates. The primary
+criterion here is Brier score for both searches, independent of the
+candidate loss rule.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>config <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">selection_prop =</span> .<span class="dv">3</span>,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">degree =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>)),</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>               <span class="at">resamples =</span> folds, <span class="at">primary_metric =</span> yardstick<span class="sc">::</span>brier_class),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">va_loss =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)),</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    <span class="at">resamples =</span> folds, <span class="at">primary_metric =</span> yardstick<span class="sc">::</span>brier_class)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>tuned_spec <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">31</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">tuning =</span> config)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>joint_fit <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(tuned_spec, development)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>choices <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(joint_fit)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>choices<span class="sc">$</span>calibration<span class="sc">$</span>selected</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; $va_loss</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;brier&quot;</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>choices<span class="sc">$</span>models<span class="sc">$</span>Inductive1<span class="sc">$</span>selected</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; $degree</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="fu">c</span>(<span class="at">selection_rows =</span> <span class="fu">length</span>(choices<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows),</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>  <span class="at">final_fit_rows =</span> <span class="fu">length</span>(choices<span class="sc">$</span>calibration<span class="sc">$</span>final_rows))</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; selection_rows final_fit_rows </span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt;            193            446</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">length</span>(<span class="fu">intersect</span>(choices<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows,</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>                           choices<span class="sc">$</span>calibration<span class="sc">$</span>final_rows)) <span class="sc">==</span> <span class="dv">0</span><span class="dt">L</span>)</span></code></pre></div>
+<p>By default classification searches use log loss
+(<code>yardstick::mn_log_loss</code>); regression searches use RMSE.
+<code>report_metrics</code> adds reporting metrics without changing the
+primary selection criterion. If you supply <code>control_grid()</code>,
+set <code>save_pred = TRUE</code> so candidate completeness can be
+checked.</p>
+<p><code>venn_abers_tuning()</code> returns stored diagnostics without
+refitting: candidate values, scores, eligibility and exclusion reasons,
+chosen settings, native tune results, data roles and fit budgets. Ties
+use stable candidate order. Inspect these records before treating a
+winning score as evidence.</p>
+</div>
+<div id="two-stage-grid-selection" class="section level2">
+<h2>Two-stage Grid selection</h2>
+<p>Reuse the same candidate grids while changing which predictions guide
+the model search:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>two_stage <span class="ot">&lt;-</span> config</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>two_stage<span class="sc">$</span>strategy <span class="ot">&lt;-</span> <span class="st">&quot;two_stage&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>two_stage_spec <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">31</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">tuning =</span> two_stage)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>two_stage_fit <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(two_stage_spec, development)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">venn_abers_tuning</span>(two_stage_fit)<span class="sc">$</span>models<span class="sc">$</span>Inductive1<span class="sc">$</span>selected</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; $degree</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">venn_abers_tuning</span>(two_stage_fit)<span class="sc">$</span>calibration<span class="sc">$</span>selected</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; $va_loss</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; [1] &quot;brier&quot;</span></span></code></pre></div>
+<p>The first stage now selects the raw model, before postprocessing or
+VA. The second selects calibration. Neither strategy implies that a
+particular method will win on future data. Choose between procedures
+using outer resampling or separate validation, not the final assessment
+split.</p>
+<p>To tune precision as well, use a distinct placeholder such as
+<code>precision = tune::tune(&quot;va_rounding&quot;)</code> and a matching grid
+column. Precision candidates are the strings <code>&quot;none&quot;</code>,
+<code>&quot;0&quot;</code>, <code>&quot;2&quot;</code> and <code>&quot;-2&quot;</code>;
+<code>&quot;none&quot;</code> means no rounding. These categorical search values
+differ from fixed constructor values such as
+<code>precision = NULL</code> or <code>precision = 2</code>.</p>
+</div>
+<div id="a-small-bayes-model-search" class="section level2">
+<h2>A small Bayes model search</h2>
+<p>Bayes searches require parameter definitions, positive
+<code>initial</code> and <code>iter</code> budgets, and more initial
+candidates than tuned parameters. This model-only example leaves
+calibration settings fixed, so no S/F selection split is requested. A
+joint search still scores the complete calibrated procedure.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>bayes_config <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">model =</span> <span class="fu">list</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">4</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="at">param_info =</span> dials<span class="sc">::</span><span class="fu">parameters</span>(<span class="fu">list</span>(<span class="at">degree =</span> dials<span class="sc">::</span><span class="fu">degree_int</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">6</span><span class="dt">L</span>)))),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">resamples =</span> folds,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">4</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">uncertain =</span> <span class="cn">Inf</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  )</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>bayes_fit <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">tuning =</span> bayes_config,</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>                                 <span class="at">seed =</span> <span class="dv">31</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  generics<span class="sc">::</span><span class="fu">fit</span>(development)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="fu">venn_abers_tuning</span>(bayes_fit)<span class="sc">$</span>models<span class="sc">$</span>Inductive1<span class="sc">$</span>selected</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; $degree</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<p>The implementation advances native <code>tune_bayes()</code> one step
+at a time. Only complete valid candidates inform the next Gaussian
+process; failed, dropped and repeated proposals still spend iteration
+budget and count toward <code>no_improve</code>.
+<code>uncertain = Inf</code> and saved predictions are required.
+Elapsed-time limits are checked between complete steps. With calibration
+Bayes tuning, also supply its <code>param_info</code>, resamples and one
+of <code>selection_prop</code> or <code>selection_split</code>, just as
+for Grid selection.</p>
+</div>
+<div id="outer-resampling-and-final-assessment" class="section level2">
+<h2>Outer resampling and final assessment</h2>
+<p>Resample the <strong>unfitted outer specification</strong>, so each
+analysis split reruns the entire tuning, preprocessing, model and
+calibration procedure. Do not calibrate once on all development data
+before resampling.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">61</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>outer_folds <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(development, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>evaluation <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">fit_resamples</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  tuned_spec, <span class="at">resamples =</span> outer_folds,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">metrics =</span> yardstick<span class="sc">::</span><span class="fu">metric_set</span>(yardstick<span class="sc">::</span>brier_class, yardstick<span class="sc">::</span>mn_log_loss),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_resamples</span>(<span class="at">save_pred =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>                                    <span class="at">pkgs =</span> <span class="fu">c</span>(<span class="st">&quot;vennabers&quot;</span>, <span class="st">&quot;stats&quot;</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>tune<span class="sc">::</span><span class="fu">collect_metrics</span>(evaluation)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 × 6</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;   .metric     .estimator  mean     n std_err .config        </span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;          </span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; 1 brier_class binary     0.246     2 0.00503 pre0_mod0_post0</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 2 mn_log_loss binary     0.687     2 0.0118  pre0_mod0_post0</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>tune<span class="sc">::</span><span class="fu">collect_notes</span>(evaluation)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; # A tibble: 0 × 5</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; # ℹ 5 variables: id &lt;chr&gt;, location &lt;chr&gt;, type &lt;chr&gt;, note &lt;chr&gt;, trace &lt;list&gt;</span></span></code></pre></div>
+<p>Review notes as well as metrics: a summary over only successful folds
+is not a complete evaluation. Fix failed folds before comparing
+procedures. For parallel outer resampling, make sure workers load
+<code>vennabers</code> and the required engine namespaces. Inner search
+parallelism is disabled. Seed outer plans separately from the
+constructor’s local <code>seed</code>.</p>
+<p>Here we preselect the joint Grid specification for demonstration. In
+an application, compare candidate procedures using the outer results,
+freeze that choice, and only then evaluate once on the held-out
+assessment split:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>final <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">last_fit</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  tuned_spec, <span class="at">split =</span> split,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">metrics =</span> yardstick<span class="sc">::</span><span class="fu">metric_set</span>(yardstick<span class="sc">::</span>brier_class, yardstick<span class="sc">::</span>mn_log_loss)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>tune<span class="sc">::</span><span class="fu">collect_metrics</span>(final)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 × 4</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt;   .metric     .estimator .estimate .config        </span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;       &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;          </span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 1 brier_class binary         0.250 pre0_mod0_post0</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 2 mn_log_loss binary         0.693 pre0_mod0_post0</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>final_workflow <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">extract_workflow</span>(final)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">predict</span>(final_workflow, rsample<span class="sc">::</span><span class="fu">assessment</span>(split)[<span class="st">&quot;x&quot;</span>], <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>))</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt;   .pred_yes .pred_no</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 1     0.400    0.600</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 2     0.646    0.354</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 3     0.400    0.600</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; 4     0.400    0.600</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; 5     0.781    0.219</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; 6     0.400    0.600</span></span></code></pre></div>
+<p>Calibration selection continues to reserve S inside the analysis
+data; the returned predictor fits only on F. Final assessment outcomes
+do not enter either role. <code>last_fit()</code> is for a trainable
+specification, not a frozen predictor from
+<code>calibrate_workflow()</code>.</p>
+</div>
+<div id="extending-the-same-pattern" class="section level2">
+<h2>Extending the same pattern</h2>
+<p>For <strong>regression</strong>, use
+<code>m = tune::tune(&quot;moderation&quot;)</code> with a positive-integer grid,
+or <code>epsilon = tune::tune(&quot;moderation&quot;)</code> with values strictly
+between zero and one. Tune exactly one. Every local calibration fold
+must satisfy <code>1 &lt;= m &lt;= floor((k - 1) / 2)</code>; epsilon
+determines m from that local size. Invalid candidates are recorded and
+excluded, not clipped into range. Omit classification loss and
+precision, and use unstratified numeric resampling.</p>
+<p>For <strong>shared OvO/OvR</strong>, choose
+<code>classification</code> and a multiclass base model; selection
+scores complete class vectors. <strong>Pairwise OvO</strong> uses local
+searches inside each class pair. Its joint Grid path without
+postprocessing selects a Cartesian grid of pair choices using
+<code>joint_resamples</code> and rejects more than 4096 combinations.
+Pairwise Bayes and tuned postprocessing search locally instead; see
+<code>?venn_abers_tuning</code> before adapting a shared model plan.</p>
+<p>With <strong>postprocessing</strong>, every B training portion runs
+its own local search, excluding P (postprocessor), C (VA calibration), S
+(selection) and outer assessment. Joint scoring evaluates complete
+compositions; two-stage scoring starts from the raw engine.
+Postprocessing method, input and split strategy stay fixed per search.
+Inspect local search counts and budgets because Cross, pairwise
+training, ensembles and full-model transfer multiply the work.</p>
+<p>Runnable larger examples are installed with the package:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="fu">c</span>(<span class="st">&quot;regression-grid.R&quot;</span>, <span class="st">&quot;shared-multiclass-grid.R&quot;</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="st">&quot;pairwise-grid.R&quot;</span>, <span class="st">&quot;postprocessing-grid.R&quot;</span>, <span class="st">&quot;postprocessing-bayes.R&quot;</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; [1] &quot;/private/var/folders/l3/9xz3dcxx2879v30qp8ptbjbw0000gn/T/RtmpPK2Hf3/Rinst9b776824e022/vennabers/examples/regression-grid.R&quot;       </span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; [2] &quot;/private/var/folders/l3/9xz3dcxx2879v30qp8ptbjbw0000gn/T/RtmpPK2Hf3/Rinst9b776824e022/vennabers/examples/shared-multiclass-grid.R&quot;</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; [3] &quot;/private/var/folders/l3/9xz3dcxx2879v30qp8ptbjbw0000gn/T/RtmpPK2Hf3/Rinst9b776824e022/vennabers/examples/pairwise-grid.R&quot;         </span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; [4] &quot;/private/var/folders/l3/9xz3dcxx2879v30qp8ptbjbw0000gn/T/RtmpPK2Hf3/Rinst9b776824e022/vennabers/examples/postprocessing-grid.R&quot;   </span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; [5] &quot;/private/var/folders/l3/9xz3dcxx2879v30qp8ptbjbw0000gn/T/RtmpPK2Hf3/Rinst9b776824e022/vennabers/examples/postprocessing-bayes.R&quot;</span></span></code></pre></div>
+<p>For an already fixed classifier, a loss-only Log/Brier comparison
+does not need automatic tuning or a refit: predict both losses on
+separate validation rows, choose there, then pass the chosen
+<code>loss</code> explicitly on untouched assessment data. Those
+validation rows are selection data from then on.</p>
+<p>For the complete standalone scripts with a contents list, open
+<code>vignette(&quot;examples-tuning&quot;, package = &quot;vennabers&quot;)</code>.
+<code>?vennabers_examples</code> indexes all four example
+collections.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

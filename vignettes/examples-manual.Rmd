@@ -1,0 +1,110 @@
+---
+title: "Example scripts: manual calibration"
+description: "Binary options, multiclass OvO/OvR, one-hot class decisions, moderated Inductive/Cross regression, fit diagnoses and assessment graphics."
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Example scripts: manual calibration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Calibrate supplied predictions with binary or multiclass Inductive/Cross methods,
+or moderated regression, and draw their fit diagnoses and assessment graphics.
+These examples use base R and the installed package.
+
+Start with `vignette("manual-calibration", package = "vennabers")` for the
+step-by-step guide and `vignette("diagnostics", package = "vennabers")` for the
+graphics. `?vennabers_examples` indexes all four example collections.
+
+## Choose an example
+
+- [Binary precision, loss and event selection](#binary-options)
+- [Binary Cross calibration with retained models](#cross-venn-abers)
+- [Inductive multiclass one-vs-one](#inductive-ovo)
+- [Inductive multiclass one-vs-rest](#inductive-ovr)
+- [Cross multiclass calibration](#cross-multiclass)
+- [One-hot class decisions](#one-hot-classes)
+- [Inductive regression](#inductive-regression)
+- [Cross regression](#cross-regression)
+- [Fit diagnoses and assessment graphics](#calibration-graphics)
+
+## Running an example
+
+Each heading below names an installed script. To inspect and run one:
+
+```{r run-example, eval=FALSE, purl=FALSE}
+script <- system.file("examples", "binary-options.R", package = "vennabers")
+file.show(script)
+source(script)
+```
+
+Replace the filename to run another script. The listings below show the complete
+code without executing it during documentation builds. Sourcing a script runs
+its fits and checks; resampling, tuning and composition matrices can take longer
+than the introductory guides.
+
+## Binary precision, loss and event selection {#binary-options}
+
+`binary-options.R`: Compare Log/Brier regularization, calibration rounding, class predictions and Cross fold diagnostics.
+
+```{r binary-options, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "binary-options.R", package = "vennabers"))}
+```
+
+## Binary Cross calibration with retained models {#cross-venn-abers}
+
+`cross-venn-abers.R`: Fit separate GLMs, retain the corresponding fold models and assess calibrated probabilities on held-out observations.
+
+```{r cross-venn-abers, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "cross-venn-abers.R", package = "vennabers"))}
+```
+
+## Inductive multiclass one-vs-one {#inductive-ovo}
+
+`inductive-ovo.R`: Calibrate fixed class probabilities, inspect pair diagnostics and score the coupled class matrix.
+
+```{r inductive-ovo, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "inductive-ovo.R", package = "vennabers"))}
+```
+
+## Inductive multiclass one-vs-rest {#inductive-ovr}
+
+`inductive-ovr.R`: Calibrate each class against the rest and assess the final normalized probabilities.
+
+```{r inductive-ovr, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "inductive-ovr.R", package = "vennabers"))}
+```
+
+## Cross multiclass calibration {#cross-multiclass}
+
+`cross-multiclass.R`: Supply fold-matched class matrices and reconstruct the OvO/OvR aggregation from binary diagnostics.
+
+```{r cross-multiclass, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "cross-multiclass.R", package = "vennabers"))}
+```
+
+## One-hot class decisions {#one-hot-classes}
+
+`one-hot-classes.R`: Represent binary and multiclass class decisions as one-hot matrices, including exact ties and missing decisions.
+
+```{r one-hot-classes, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "one-hot-classes.R", package = "vennabers"))}
+```
+
+## Inductive regression {#inductive-regression}
+
+`inductive-regression.R`: Fit an independent linear model, calibrate numeric predictions and report RMSE/MAE on separate assessment data.
+
+```{r inductive-regression, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "inductive-regression.R", package = "vennabers"))}
+```
+
+## Cross regression {#cross-regression}
+
+`cross-regression.R`: Retain matching fold models and inspect the equal-weight merger of regression points and bounds.
+
+```{r cross-regression, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "cross-regression.R", package = "vennabers"))}
+```
+
+## Fit diagnoses and assessment graphics {#calibration-graphics}
+
+`calibration-graphics.R`: Draw the stored calibration map and Venn-Abers width of binary, Cross and regression fits, then assess held-out pairs with a seeded CORP reliability diagram, its Brier decomposition and a regression plot.
+
+```{r calibration-graphics, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "calibration-graphics.R", package = "vennabers"))}
+```

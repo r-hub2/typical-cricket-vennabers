@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Example scripts: Grid and Bayes selection</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Example scripts: Grid and Bayes
+selection</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#choose-an-example" id="toc-choose-an-example">Choose an
+example</a></li>
+<li><a href="#running-an-example" id="toc-running-an-example">Running an
+example</a></li>
+<li><a href="#binary-grid" id="toc-binary-grid">Binary Grid
+selection</a></li>
+<li><a href="#shared-multiclass-grid" id="toc-shared-multiclass-grid">Shared multiclass Grid
+selection</a></li>
+<li><a href="#shared-multiclass-bayes" id="toc-shared-multiclass-bayes">Shared multiclass Bayes
+selection</a></li>
+<li><a href="#pairwise-grid" id="toc-pairwise-grid">Pairwise OvO Grid
+selection</a></li>
+<li><a href="#pairwise-bayes" id="toc-pairwise-bayes">Pairwise OvO Bayes
+selection</a></li>
+<li><a href="#regression-grid" id="toc-regression-grid">Regression Grid
+selection</a></li>
+<li><a href="#regression-bayes" id="toc-regression-bayes">Regression
+Bayes selection</a></li>
+<li><a href="#postprocessing-grid" id="toc-postprocessing-grid">Grid
+selection with postprocessing</a></li>
+<li><a href="#postprocessing-bayes" id="toc-postprocessing-bayes">Bayes
+selection with postprocessing</a></li>
+</ul>
+</div>
+
+<p>Select recipe, model and calibration settings using local searches,
+then assess the complete procedure on independent data. Install the
+optional workflow packages plus <code>tune</code>, <code>dials</code>
+and <code>yardstick</code>; postprocessing examples also use the
+dependencies named in their scripts.</p>
+<p>Start with <code>vignette(&quot;tuning&quot;, package = &quot;vennabers&quot;)</code> for
+the step-by-step guide. <code>?vennabers_examples</code> indexes all
+four example collections.</p>
+<div id="choose-an-example" class="section level2">
+<h2>Choose an example</h2>
+<ul>
+<li><a href="#binary-grid">Binary Grid selection</a></li>
+<li><a href="#shared-multiclass-grid">Shared multiclass Grid
+selection</a></li>
+<li><a href="#shared-multiclass-bayes">Shared multiclass Bayes
+selection</a></li>
+<li><a href="#pairwise-grid">Pairwise OvO Grid selection</a></li>
+<li><a href="#pairwise-bayes">Pairwise OvO Bayes selection</a></li>
+<li><a href="#regression-grid">Regression Grid selection</a></li>
+<li><a href="#regression-bayes">Regression Bayes selection</a></li>
+<li><a href="#postprocessing-grid">Grid selection with
+postprocessing</a></li>
+<li><a href="#postprocessing-bayes">Bayes selection with
+postprocessing</a></li>
+</ul>
+</div>
+<div id="running-an-example" class="section level2">
+<h2>Running an example</h2>
+<p>Each heading below names an installed script. To inspect and run
+one:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>script <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;binary-grid.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">file.show</span>(script)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">source</span>(script)</span></code></pre></div>
+<p>Replace the filename to run another script. The listings below show
+the complete code without executing it during documentation builds.
+Sourcing a script runs its fits and checks; resampling, tuning and
+composition matrices can take longer than the introductory guides.</p>
+</div>
+<div id="binary-grid" class="section level2">
+<h2>Binary Grid selection</h2>
+<p><code>binary-grid.R</code>: Compare joint and two-stage selection
+while preserving independent assessment data.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Binary grid selection. Every callback sees only its current local data.</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">19</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">600</span>))</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>data<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(stats<span class="sc">::</span><span class="fu">runif</span>(<span class="dv">600</span>) <span class="sc">&lt;</span> stats<span class="sc">::</span><span class="fu">plogis</span>(data<span class="sc">$</span>x), <span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>                     <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>development <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">400</span>, ]</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>validation <span class="ot">&lt;-</span> data[<span class="dv">401</span><span class="sc">:</span><span class="dv">500</span>, ]</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> data[<span class="dv">501</span><span class="sc">:</span><span class="dv">600</span>, ]</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>recipe <span class="ot">&lt;-</span> recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x, development) <span class="sc">|&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  recipes<span class="sc">::</span><span class="fu">step_poly</span>(x, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipe) <span class="sc">|&gt;</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>))</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="cf">for</span> (strategy <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;joint&quot;</span>, <span class="st">&quot;two_stage&quot;</span>)) {</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  config <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> strategy, <span class="at">selection_prop =</span> .<span class="dv">3</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>    <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">degree =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>)),</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)),</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>    <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>      <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">va_loss =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>), <span class="at">va_rounding =</span> <span class="fu">c</span>(<span class="st">&quot;none&quot;</span>, <span class="st">&quot;-2&quot;</span>)),</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>),</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>      <span class="at">primary_metric =</span> yardstick<span class="sc">::</span>brier_class))</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>  outer <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">31</span>,</span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>    <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">precision =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_rounding&quot;</span>), <span class="at">tuning =</span> config)</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>  fitted <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(outer, development)</span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>  choices <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">length</span>(<span class="fu">intersect</span>(choices<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows,</span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>                              choices<span class="sc">$</span>calibration<span class="sc">$</span>final_rows)))</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">strategy =</span> strategy, <span class="at">calibration =</span> choices<span class="sc">$</span>calibration<span class="sc">$</span>chosen,</span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>          <span class="at">model =</span> choices<span class="sc">$</span>models<span class="sc">$</span>Inductive1<span class="sc">$</span>chosen))</span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">predict</span>(fitted, assessment, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)))</span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>}</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co"># Narrow loss-only choice after an already fixed fit: no refitting.</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>fixed <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_formula</span>(truth <span class="sc">~</span> x) <span class="sc">|&gt;</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>))</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>fitted_fixed <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(<span class="fu">calibrated_workflow</span>(fixed, <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">31</span>), development)</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>losses <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>), <span class="cf">function</span>(loss) {</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>  probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted_fixed, validation, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>, <span class="at">loss =</span> loss)<span class="sc">$</span>.pred_yes</span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  yardstick<span class="sc">::</span><span class="fu">mn_log_loss_vec</span>(validation<span class="sc">$</span>truth, probability, <span class="at">event_level =</span> <span class="st">&quot;first&quot;</span>)</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>}, <span class="fu">numeric</span>(<span class="dv">1</span>))</span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>chosen_loss <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)[<span class="fu">which.min</span>(losses)]</span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">predict</span>(fitted_fixed, assessment, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>, <span class="at">loss =</span> chosen_loss)))</span></code></pre></div>
+</div>
+<div id="shared-multiclass-grid" class="section level2">
+<h2>Shared multiclass Grid selection</h2>
+<p><code>shared-multiclass-grid.R</code>: Select complete shared OvO/OvR
+procedures using joint or two-stage Grid searches.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Run after installation: Rscript inst/examples/shared-multiclass-grid.R</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>data <span class="ot">&lt;-</span> iris</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">names</span>(data)[<span class="dv">5</span><span class="dt">L</span>] <span class="ot">&lt;-</span> <span class="st">&quot;truth&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> ., data) <span class="sc">|&gt;</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">step_poly</span>(Sepal.Length, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">multinom_reg</span>(<span class="at">engine =</span> <span class="st">&quot;nnet&quot;</span>))</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="cf">for</span> (classification <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;ovo&quot;</span>, <span class="st">&quot;ovr&quot;</span>)) <span class="cf">for</span> (strategy <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;joint&quot;</span>, <span class="st">&quot;two_stage&quot;</span>)) {</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  tuning <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> strategy, <span class="at">selection_prop =</span> .<span class="dv">4</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>    <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">degree =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>)),</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)),</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>    <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">va_loss =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)),</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)))</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  fitted <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">classification =</span> classification,</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>,</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>    <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">tuning =</span> tuning, <span class="at">seed =</span> <span class="dv">19</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>    generics<span class="sc">::</span><span class="fu">fit</span>(data)</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  selection <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>  probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted, data[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ], <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">names</span>(probability), <span class="fu">paste0</span>(<span class="st">&quot;.pred_&quot;</span>, <span class="fu">levels</span>(data<span class="sc">$</span>truth))),</span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>            <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">rowSums</span>(probability) <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">&lt;</span> <span class="fl">1e-8</span>,</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>            <span class="st">&quot;Full1&quot;</span> <span class="sc">%in%</span> <span class="fu">names</span>(selection<span class="sc">$</span>models))</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">classification =</span> classification, <span class="at">strategy =</span> strategy,</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>          <span class="at">calibration =</span> selection<span class="sc">$</span>calibration<span class="sc">$</span>chosen,</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>          <span class="at">full_model =</span> selection<span class="sc">$</span>models<span class="sc">$</span>Full1<span class="sc">$</span>chosen))</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>  <span class="fu">print</span>(probability)</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="shared-multiclass-bayes" class="section level2">
+<h2>Shared multiclass Bayes selection</h2>
+<p><code>shared-multiclass-bayes.R</code>: Select complete OvO/OvR class
+matrices with local stepwise Bayes searches.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Run after installation: Rscript inst/examples/shared-multiclass-bayes.R</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>data <span class="ot">&lt;-</span> iris</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">names</span>(data)[<span class="dv">5</span><span class="dt">L</span>] <span class="ot">&lt;-</span> <span class="st">&quot;truth&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_formula</span>(truth <span class="sc">~</span> Sepal.Length <span class="sc">+</span> Petal.Length) <span class="sc">|&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">decision_tree</span>(<span class="at">tree_depth =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;depth&quot;</span>),</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>, <span class="at">engine =</span> <span class="st">&quot;rpart&quot;</span>))</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>model_params <span class="ot">&lt;-</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_quant_param</span>(<span class="at">type =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">8</span><span class="dt">L</span>), <span class="at">inclusive =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">TRUE</span>), <span class="at">label =</span> <span class="fu">c</span>(<span class="at">depth =</span> <span class="st">&quot;Depth&quot;</span>)))</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>calibration_params <span class="ot">&lt;-</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_qual_param</span>(<span class="at">type =</span> <span class="st">&quot;character&quot;</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>), <span class="at">label =</span> <span class="fu">c</span>(<span class="at">va_loss =</span> <span class="st">&quot;Loss&quot;</span>)))</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="cf">for</span> (classification <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;ovo&quot;</span>, <span class="st">&quot;ovr&quot;</span>)) <span class="cf">for</span> (strategy <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;joint&quot;</span>, <span class="st">&quot;two_stage&quot;</span>)) {</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>  tuning <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> strategy, <span class="at">selection_prop =</span> .<span class="dv">4</span>,</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>    <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">4</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>      <span class="at">param_info =</span> model_params, <span class="at">resamples =</span> folds,</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>      <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">4</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>    <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>      <span class="at">param_info =</span> calibration_params, <span class="at">resamples =</span> folds,</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>      <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">5</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>  fitted <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">classification =</span> classification,</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>,</span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a>    <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">tuning =</span> tuning, <span class="at">seed =</span> <span class="dv">19</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>    generics<span class="sc">::</span><span class="fu">fit</span>(data)</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>  selection <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>  probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted, data[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ], <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">names</span>(probability), <span class="fu">paste0</span>(<span class="st">&quot;.pred_&quot;</span>, <span class="fu">levels</span>(data<span class="sc">$</span>truth))),</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>            <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">rowSums</span>(probability) <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">&lt;</span> <span class="fl">1e-8</span>,</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>            <span class="st">&quot;Full1&quot;</span> <span class="sc">%in%</span> <span class="fu">names</span>(selection<span class="sc">$</span>models))</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">classification =</span> classification, <span class="at">strategy =</span> strategy,</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a>          <span class="at">calibration =</span> selection<span class="sc">$</span>calibration<span class="sc">$</span>chosen,</span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a>          <span class="at">full_model =</span> selection<span class="sc">$</span>models<span class="sc">$</span>Full1<span class="sc">$</span>chosen))</span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a>  <span class="fu">print</span>(probability)</span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="pairwise-grid" class="section level2">
+<h2>Pairwise OvO Grid selection</h2>
+<p><code>pairwise-grid.R</code>: Search local class-pair grids and
+select using coupled class predictions.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Run after installation: Rscript inst/examples/pairwise-grid.R</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># Three overlapping classes: unlike iris, no class pair is separable in its</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># small local splits, so the base GLMs converge.</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>data <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">5</span>, {</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;setosa&quot;</span>, <span class="st">&quot;versicolor&quot;</span>, <span class="st">&quot;virginica&quot;</span>), <span class="dv">50</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">Sepal.Length =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">150</span>, <span class="fu">c</span>(<span class="fl">5.4</span>, <span class="fl">5.9</span>, <span class="fl">6.4</span>)[truth], .<span class="dv">7</span>), <span class="at">truth =</span> truth)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>})</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> Sepal.Length, data) <span class="sc">|&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">step_poly</span>(Sepal.Length, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>))</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="cf">for</span> (strategy <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;joint&quot;</span>, <span class="st">&quot;two_stage&quot;</span>)) {</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  tuning <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> strategy, <span class="at">selection_prop =</span> .<span class="dv">6</span>,</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>    <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">degree =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>))),</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>    <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>      <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">va_loss =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>),</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>                        <span class="at">rounding =</span> <span class="fu">c</span>(<span class="st">&quot;none&quot;</span>, <span class="st">&quot;-2&quot;</span>)),</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)))</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>  <span class="cf">if</span> (strategy <span class="sc">==</span> <span class="st">&quot;two_stage&quot;</span>) tuning<span class="sc">$</span>model<span class="sc">$</span>resamples <span class="ot">&lt;-</span> <span class="cf">function</span>(d)</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>    rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>  outer <span class="ot">&lt;-</span> <span class="cf">if</span> (strategy <span class="sc">==</span> <span class="st">&quot;joint&quot;</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>    <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">classification =</span> <span class="st">&quot;ovo&quot;</span>, <span class="at">model_training =</span> <span class="st">&quot;pairwise&quot;</span>,</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>      <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">precision =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;rounding&quot;</span>),</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>      <span class="at">tuning =</span> tuning, <span class="at">seed =</span> <span class="dv">19</span>) <span class="cf">else</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a>    <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">classification =</span> <span class="st">&quot;ovo&quot;</span>, <span class="at">model_training =</span> <span class="st">&quot;pairwise&quot;</span>,</span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>,</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a>      <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">precision =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;rounding&quot;</span>),</span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a>      <span class="at">tuning =</span> tuning, <span class="at">seed =</span> <span class="dv">19</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a>  fitted <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(outer, data)</span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a>  selection <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a>  probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted, data[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ], <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">names</span>(probability), <span class="fu">paste0</span>(<span class="st">&quot;.pred_&quot;</span>, <span class="fu">levels</span>(data<span class="sc">$</span>truth))),</span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a>            <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">rowSums</span>(probability) <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">&lt;</span> <span class="fl">1e-8</span>,</span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a>            <span class="fu">identical</span>(<span class="fu">names</span>(selection<span class="sc">$</span>models), <span class="fu">paste0</span>(<span class="st">&quot;pair_&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)),</span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a>            <span class="cf">if</span> (strategy <span class="sc">==</span> <span class="st">&quot;two_stage&quot;</span>)</span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a>              <span class="fu">all</span>(<span class="fu">vapply</span>(selection<span class="sc">$</span>models, <span class="cf">function</span>(pair) <span class="st">&quot;Full1&quot;</span> <span class="sc">%in%</span> <span class="fu">names</span>(pair), <span class="cn">TRUE</span>)) <span class="cf">else</span></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a>              <span class="fu">nrow</span>(selection<span class="sc">$</span>joint<span class="sc">$</span>candidates) <span class="sc">==</span> <span class="dv">16</span><span class="dt">L</span>)</span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">strategy =</span> strategy, <span class="at">calibration =</span> selection<span class="sc">$</span>calibration<span class="sc">$</span>chosen))</span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a>  <span class="fu">print</span>(<span class="cf">if</span> (strategy <span class="sc">==</span> <span class="st">&quot;joint&quot;</span>) selection<span class="sc">$</span>joint<span class="sc">$</span>selected<span class="sc">$</span>pairs <span class="cf">else</span></span>
+<span id="cb5-43"><a href="#cb5-43" tabindex="-1"></a>    <span class="fu">lapply</span>(selection<span class="sc">$</span>models, <span class="cf">function</span>(pair) <span class="fu">vapply</span>(pair, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;&quot;</span>, <span class="st">&quot;chosen&quot;</span>)))</span>
+<span id="cb5-44"><a href="#cb5-44" tabindex="-1"></a>  <span class="fu">print</span>(probability)</span>
+<span id="cb5-45"><a href="#cb5-45" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="pairwise-bayes" class="section level2">
+<h2>Pairwise OvO Bayes selection</h2>
+<p><code>pairwise-bayes.R</code>: Run local pair searches and assess the
+complete coupled predictor.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Run after installation: Rscript inst/examples/pairwise-bayes.R</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Three overlapping classes: unlike iris, no class pair is separable in its</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># small local splits, so the base GLMs converge.</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>data <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">5</span>, {</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;setosa&quot;</span>, <span class="st">&quot;versicolor&quot;</span>, <span class="st">&quot;virginica&quot;</span>), <span class="dv">50</span>))</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">Sepal.Length =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">150</span>, <span class="fu">c</span>(<span class="fl">5.4</span>, <span class="fl">5.9</span>, <span class="fl">6.4</span>)[truth], .<span class="dv">7</span>), <span class="at">truth =</span> truth)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>})</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> Sepal.Length, data) <span class="sc">|&gt;</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">step_poly</span>(Sepal.Length, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>))</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>folds <span class="ot">&lt;-</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>tuning <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>, <span class="at">selection_prop =</span> .<span class="dv">6</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>  <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>    <span class="at">param_info =</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_quant_param</span>(<span class="at">type =</span> <span class="st">&quot;integer&quot;</span>,</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>      <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>), <span class="at">inclusive =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">TRUE</span>), <span class="at">label =</span> <span class="fu">c</span>(<span class="at">degree =</span> <span class="st">&quot;Degree&quot;</span>))),</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>    <span class="at">resamples =</span> folds, <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">9</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>    <span class="at">param_info =</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_qual_param</span>(<span class="at">type =</span> <span class="st">&quot;character&quot;</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>      <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>), <span class="at">label =</span> <span class="fu">c</span>(<span class="at">va_loss =</span> <span class="st">&quot;Loss&quot;</span>))),</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>    <span class="at">resamples =</span> folds, <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">10</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>fitted <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">classification =</span> <span class="st">&quot;ovo&quot;</span>,</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>  <span class="at">model_training =</span> <span class="st">&quot;pairwise&quot;</span>, <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>,</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>  <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>), <span class="at">tuning =</span> tuning, <span class="at">seed =</span> <span class="dv">11</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>  generics<span class="sc">::</span><span class="fu">fit</span>(data)</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>selection <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">names</span>(selection<span class="sc">$</span>models), <span class="fu">paste0</span>(<span class="st">&quot;pair_&quot;</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>)),</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>  selection<span class="sc">$</span>calibration<span class="sc">$</span>chosen <span class="sc">%in%</span> selection<span class="sc">$</span>calibration<span class="sc">$</span>candidates<span class="sc">$</span>id)</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">vapply</span>(selection<span class="sc">$</span>models, <span class="cf">function</span>(pair) pair<span class="sc">$</span>Full1<span class="sc">$</span>chosen, <span class="st">&quot;&quot;</span>))</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">predict</span>(fitted, data[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ], <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>))</span></code></pre></div>
+</div>
+<div id="regression-grid" class="section level2">
+<h2>Regression Grid selection</h2>
+<p><code>regression-grid.R</code>: Select IVAR/CVAR model and moderation
+settings with joint or two-stage searches.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># IVAR/CVAR grid selection: local learning, independent assessment.</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">19</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">360</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>data<span class="sc">$</span>truth <span class="ot">&lt;-</span> data<span class="sc">$</span>x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">360</span>, <span class="at">sd =</span> .<span class="dv">3</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>development <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">300</span>, ]</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> data[<span class="dv">301</span><span class="sc">:</span><span class="dv">360</span>, ]</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x, development) <span class="sc">|&gt;</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">step_poly</span>(x, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">linear_reg</span>(<span class="at">engine =</span> <span class="st">&quot;lm&quot;</span>))</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="cf">for</span> (strategy <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;joint&quot;</span>, <span class="st">&quot;two_stage&quot;</span>)) <span class="cf">for</span> (method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;inductive&quot;</span>, <span class="st">&quot;cross&quot;</span>)) {</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  config <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> strategy, <span class="at">selection_prop =</span> .<span class="dv">5</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>    <span class="at">model =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">degree =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">2</span><span class="dt">L</span>)),</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>)),</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>    <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">moderation =</span> <span class="fu">c</span>(.<span class="dv">4</span>, .<span class="dv">6</span>)),</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>      <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>),</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>      <span class="at">report_metrics =</span> <span class="fu">list</span>(yardstick<span class="sc">::</span>mae)))</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  args <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">workflow =</span> base, <span class="at">outcome =</span> <span class="st">&quot;truth&quot;</span>, <span class="at">method =</span> method,</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>    <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>, <span class="at">epsilon =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;moderation&quot;</span>),</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>    <span class="at">tuning =</span> config, <span class="at">seed =</span> <span class="dv">31</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="cf">if</span> (method <span class="sc">==</span> <span class="st">&quot;cross&quot;</span>) args<span class="sc">$</span>v <span class="ot">&lt;-</span> <span class="dv">2</span><span class="dt">L</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  fitted <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(<span class="fu">do.call</span>(calibrated_workflow, args, <span class="at">quote =</span> <span class="cn">TRUE</span>), development)</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>  choices <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">length</span>(<span class="fu">intersect</span>(choices<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows,</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>    choices<span class="sc">$</span>calibration<span class="sc">$</span>final_rows)), <span class="st">&quot;Full1&quot;</span> <span class="sc">%in%</span> <span class="fu">names</span>(choices<span class="sc">$</span>models))</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">strategy =</span> strategy, <span class="at">method =</span> method,</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a>    <span class="at">epsilon =</span> choices<span class="sc">$</span>calibration<span class="sc">$</span>selected<span class="sc">$</span>moderation,</span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>    <span class="at">full_degree =</span> choices<span class="sc">$</span>models<span class="sc">$</span>Full1<span class="sc">$</span>selected<span class="sc">$</span>degree))</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted, assessment)<span class="sc">$</span>.pred</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">is.finite</span>(prediction)))</span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">rmse =</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a>    <span class="at">mae =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction))))</span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a>  <span class="fu">print</span>(choices<span class="sc">$</span>fit_roles)</span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>}</span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a></span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a><span class="co"># To search m instead, use m = tune::tune(&quot;moderation&quot;) and a positive integer</span></span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a><span class="co"># grid, for example c(1L, 2L), omitting epsilon. Every inner calibration size k</span></span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a><span class="co"># must support 1 &lt;= m &lt;= floor((k-1)/2); invalid candidates are recorded/excluded.</span></span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a><span class="co"># S selects moderation, F fits the final predictor; assessment stays untouched.</span></span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a><span class="co"># Joint scores complete calibrated predictions, two_stage scores raw fits first.</span></span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a><span class="co"># RMSE is the default selection metric; MAE above is an independent report only.</span></span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a><span class="co"># Full1 chooses its own model parameters; it does not inherit a fold&#39;s choice.</span></span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a><span class="co"># CVAR averages fold points and each bound separately, with equal weights.</span></span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a><span class="co"># These bounds describe regularized conditional means, not prediction intervals.</span></span></code></pre></div>
+</div>
+<div id="regression-bayes" class="section level2">
+<h2>Regression Bayes selection</h2>
+<p><code>regression-bayes.R</code>: Search IVAR/CVAR settings locally
+while keeping assessment observations untouched.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># IVAR/CVAR Bayes selection on development data; assessment remains untouched.</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">19</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">240</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>data<span class="sc">$</span>truth <span class="ot">&lt;-</span> data<span class="sc">$</span>x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">240</span>, <span class="at">sd =</span> .<span class="dv">3</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>development <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>, ]</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> data[<span class="dv">201</span><span class="sc">:</span><span class="dv">240</span>, ]</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x, development) <span class="sc">|&gt;</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">step_poly</span>(x, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">linear_reg</span>(<span class="at">engine =</span> <span class="st">&quot;lm&quot;</span>))</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>model_params <span class="ot">&lt;-</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_quant_param</span>(</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;integer&quot;</span>, <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">3</span><span class="dt">L</span>), <span class="at">inclusive =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">TRUE</span>),</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">label =</span> <span class="fu">c</span>(<span class="at">degree =</span> <span class="st">&quot;Degree&quot;</span>)))</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>moderation_params <span class="ot">&lt;-</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_quant_param</span>(</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;double&quot;</span>, <span class="at">range =</span> <span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">4</span>), <span class="at">inclusive =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">TRUE</span>),</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  <span class="at">label =</span> <span class="fu">c</span>(<span class="at">moderation =</span> <span class="st">&quot;Moderation&quot;</span>)))</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="cf">for</span> (strategy <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;joint&quot;</span>, <span class="st">&quot;two_stage&quot;</span>)) <span class="cf">for</span> (method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;inductive&quot;</span>, <span class="st">&quot;cross&quot;</span>)) {</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>  search <span class="ot">&lt;-</span> <span class="cf">function</span>(params, seed) <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">3</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>    <span class="at">param_info =</span> params, <span class="at">resamples =</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>),</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a>    <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> seed, <span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">no_improve =</span> <span class="dv">2</span><span class="dt">L</span>))</span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a>  config <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">strategy =</span> strategy, <span class="at">selection_prop =</span> .<span class="dv">5</span>,</span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a>    <span class="at">model =</span> <span class="fu">search</span>(model_params, <span class="dv">3</span>), <span class="at">calibration =</span> <span class="fu">search</span>(moderation_params, <span class="dv">4</span>))</span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a>  args <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">workflow =</span> base, <span class="at">outcome =</span> <span class="st">&quot;truth&quot;</span>, <span class="at">method =</span> method,</span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a>    <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>, <span class="at">epsilon =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;moderation&quot;</span>),</span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a>    <span class="at">tuning =</span> config, <span class="at">seed =</span> <span class="dv">31</span>)</span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>  <span class="cf">if</span> (method <span class="sc">==</span> <span class="st">&quot;cross&quot;</span>) args<span class="sc">$</span>v <span class="ot">&lt;-</span> <span class="dv">2</span><span class="dt">L</span> <span class="cf">else</span> args<span class="sc">$</span>calibration_prop <span class="ot">&lt;-</span> .<span class="dv">5</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a>  fitted <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(<span class="fu">do.call</span>(calibrated_workflow, args, <span class="at">quote =</span> <span class="cn">TRUE</span>), development)</span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a>  choices <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fitted)</span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">length</span>(<span class="fu">intersect</span>(choices<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows,</span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a>    choices<span class="sc">$</span>calibration<span class="sc">$</span>final_rows)), <span class="st">&quot;Full1&quot;</span> <span class="sc">%in%</span> <span class="fu">names</span>(choices<span class="sc">$</span>models))</span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted, assessment)<span class="sc">$</span>.pred</span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">strategy =</span> strategy, <span class="at">method =</span> method,</span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a>    <span class="at">epsilon =</span> choices<span class="sc">$</span>calibration<span class="sc">$</span>selected<span class="sc">$</span>moderation,</span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a>    <span class="at">full_degree =</span> choices<span class="sc">$</span>models<span class="sc">$</span>Full1<span class="sc">$</span>selected<span class="sc">$</span>degree,</span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a>    <span class="at">rmse =</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction)<span class="sc">^</span><span class="dv">2</span>))))</span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a>}</span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" tabindex="-1"></a><span class="co"># To search m instead, use m = tune::tune(&quot;moderation&quot;) and an integer</span></span>
+<span id="cb8-41"><a href="#cb8-41" tabindex="-1"></a><span class="co"># dials range such as 1:2, omitting epsilon. Every inner calibration size</span></span>
+<span id="cb8-42"><a href="#cb8-42" tabindex="-1"></a><span class="co"># must support the proposed moderation value. Joint scores complete calibrated</span></span>
+<span id="cb8-43"><a href="#cb8-43" tabindex="-1"></a><span class="co"># predictions; two_stage selects the raw fit first. Full1 chooses locally.</span></span></code></pre></div>
+</div>
+<div id="postprocessing-grid" class="section level2">
+<h2>Grid selection with postprocessing</h2>
+<p><code>postprocessing-grid.R</code>: Run separate B-local searches for
+classification and regression compositions, excluding P, C and
+assessment data.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Grid selection with learned postprocessing. Every engine/recipe search runs</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># inside its own B: each VA source, each inner ensemble pair and each full F</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co"># composition searches separately. P, C, the outer assessment A and a reserved</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># option-selection share S never enter a search. Joint candidates are complete</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># fixed compositions (no nested search); the first two-stage step scores the raw</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co"># engine/recipe without postprocessor or VA.</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;assertions.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>))</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;vennabers&quot;</span>, <span class="st">&quot;parsnip&quot;</span>, <span class="st">&quot;withr&quot;</span>, <span class="st">&quot;workflows&quot;</span>, <span class="st">&quot;recipes&quot;</span>, <span class="st">&quot;rsample&quot;</span>, <span class="st">&quot;tune&quot;</span>, <span class="st">&quot;yardstick&quot;</span>, <span class="st">&quot;tailor&quot;</span>, <span class="st">&quot;probably&quot;</span>, <span class="st">&quot;nnet&quot;</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>cases <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">all</span>(<span class="fu">vapply</span>(packages, requireNamespace, <span class="fu">logical</span>(<span class="dv">1</span>), <span class="at">quietly =</span> <span class="cn">TRUE</span>))) {</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="fu">library</span>(vennabers)</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  checker <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="fu">sys.source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;check-encoded-evaluation.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>), checker)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  stratified <span class="ot">&lt;-</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  plain <span class="ot">&lt;-</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  grid <span class="ot">&lt;-</span> <span class="cf">function</span>(n) <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">degree =</span> <span class="fu">seq_len</span>(n)))</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  classes <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">7</span>, {</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>    truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>), <span class="dv">800</span>))</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">2400</span>, <span class="at">sd =</span> <span class="dv">3</span>) <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>)[truth],</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>      <span class="at">z =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">2400</span>, <span class="at">sd =</span> <span class="dv">3</span>) <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)[truth], <span class="at">truth =</span> truth)</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>  })</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>  binary <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">8</span>, {</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>    x <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>, <span class="at">sd =</span> <span class="fl">1.5</span>)</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">z =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>),</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>      <span class="at">truth =</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(stats<span class="sc">::</span><span class="fu">runif</span>(<span class="dv">1200</span>) <span class="sc">&lt;</span> stats<span class="sc">::</span><span class="fu">plogis</span>(x <span class="sc">-</span> .<span class="dv">4</span> <span class="sc">*</span> x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> .<span class="dv">5</span>), <span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>)))</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>  })</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>  numeric <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">9</span>, {</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>    x <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>)</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">z =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>), <span class="at">truth =</span> <span class="dv">3</span> <span class="sc">+</span> x <span class="sc">-</span> .<span class="dv">5</span> <span class="sc">*</span> x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>, <span class="at">sd =</span> .<span class="dv">5</span>))</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>  })</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="cf">function</span>(d, engine) workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span> workflows<span class="sc">::</span><span class="fu">add_recipe</span>(</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x <span class="sc">+</span> z, d) <span class="sc">|&gt;</span> recipes<span class="sc">::</span><span class="fu">step_poly</span>(x, <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>    workflows<span class="sc">::</span><span class="fu">add_model</span>(engine)</span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>  glm <span class="ot">&lt;-</span> parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>)</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>  nnet <span class="ot">&lt;-</span> parsnip<span class="sc">::</span><span class="fu">multinom_reg</span>(<span class="at">penalty =</span> .<span class="dv">1</span>) <span class="sc">|&gt;</span> parsnip<span class="sc">::</span><span class="fu">set_engine</span>(<span class="st">&quot;nnet&quot;</span>, <span class="at">trace =</span> <span class="cn">FALSE</span>, <span class="at">maxit =</span> <span class="dv">1000</span>)</span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>  specs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a>    <span class="co"># The v0.9 benchmark case: binary full ensemble, two stages, four candidates per local search.</span></span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a>    <span class="at">binary_sigmoid_ensemble =</span> <span class="fu">list</span>(<span class="at">data =</span> binary, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(binary, glm), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>, <span class="at">seed =</span> <span class="dv">3</span>,</span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a>      <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;two_stage&quot;</span>, <span class="at">model =</span> <span class="fu">c</span>(<span class="fu">grid</span>(<span class="dv">4</span>), <span class="fu">list</span>(<span class="at">resamples =</span> stratified))),</span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;sigmoid&quot;</span>, <span class="at">sigmoid_input =</span> <span class="st">&quot;probability&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;ensemble&quot;</span>, <span class="at">v =</span> <span class="dv">3</span>))),</span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a>    <span class="at">pairwise_tailor_joint =</span> <span class="fu">list</span>(<span class="at">data =</span> classes[<span class="fu">c</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;z&quot;</span>, <span class="st">&quot;truth&quot;</span>)], <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(classes, glm), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a>      <span class="at">classification =</span> <span class="st">&quot;ovo&quot;</span>, <span class="at">model_training =</span> <span class="st">&quot;pairwise&quot;</span>, <span class="at">seed =</span> <span class="dv">4</span>,</span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>      <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>, <span class="at">model =</span> <span class="fu">c</span>(<span class="fu">grid</span>(<span class="dv">2</span>), <span class="fu">list</span>(<span class="at">resamples =</span> stratified)), <span class="at">joint_resamples =</span> stratified),</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;tailor_logistic&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>))),</span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>    <span class="at">ovr_multinomial_options =</span> <span class="fu">list</span>(<span class="at">data =</span> classes, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(classes, nnet), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a>      <span class="at">classification =</span> <span class="st">&quot;ovr&quot;</span>, <span class="at">seed =</span> <span class="dv">5</span>, <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>),</span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a>      <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;two_stage&quot;</span>, <span class="at">selection_prop =</span> .<span class="dv">5</span>,</span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a>        <span class="at">model =</span> <span class="fu">c</span>(<span class="fu">grid</span>(<span class="dv">2</span>), <span class="fu">list</span>(<span class="at">resamples =</span> stratified)),</span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a>        <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;grid&quot;</span>, <span class="at">grid =</span> <span class="fu">data.frame</span>(<span class="at">va_loss =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)), <span class="at">resamples =</span> stratified)),</span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;tailor_multinomial&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>))),</span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a>    <span class="at">regression_isotonic_joint =</span> <span class="fu">list</span>(<span class="at">data =</span> numeric, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(numeric, parsnip<span class="sc">::</span><span class="fu">linear_reg</span>()), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>, <span class="at">seed =</span> <span class="dv">6</span>,</span>
+<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a>      <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>, <span class="at">model =</span> <span class="fu">c</span>(<span class="fu">grid</span>(<span class="dv">2</span>), <span class="fu">list</span>(<span class="at">resamples =</span> plain))),</span>
+<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;isotonic_numeric&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>))),</span>
+<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a>    <span class="at">regression_linear_ensemble =</span> <span class="fu">list</span>(<span class="at">data =</span> numeric, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(numeric, parsnip<span class="sc">::</span><span class="fu">linear_reg</span>()), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb9-57"><a href="#cb9-57" tabindex="-1"></a>      <span class="at">seed =</span> <span class="dv">7</span>, <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;two_stage&quot;</span>, <span class="at">model =</span> <span class="fu">c</span>(<span class="fu">grid</span>(<span class="dv">2</span>), <span class="fu">list</span>(<span class="at">resamples =</span> plain))),</span>
+<span id="cb9-58"><a href="#cb9-58" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;tailor_linear&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;ensemble&quot;</span>, <span class="at">v =</span> <span class="dv">2</span>))))</span>
+<span id="cb9-59"><a href="#cb9-59" tabindex="-1"></a>  <span class="co"># Every local search with its inner B/P plan and, for pairwise, its pair rows.</span></span>
+<span id="cb9-60"><a href="#cb9-60" tabindex="-1"></a>  searches <span class="ot">&lt;-</span> <span class="cf">function</span>(state) {</span>
+<span id="cb9-61"><a href="#cb9-61" tabindex="-1"></a>    parts <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(state<span class="sc">$</span>pair_models)) <span class="fu">list</span>(state) <span class="cf">else</span> state<span class="sc">$</span>pair_models</span>
+<span id="cb9-62"><a href="#cb9-62" tabindex="-1"></a>    <span class="fu">unlist</span>(<span class="fu">lapply</span>(parts, <span class="cf">function</span>(part) {</span>
+<span id="cb9-63"><a href="#cb9-63" tabindex="-1"></a>      local <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(part<span class="sc">$</span>pair_id)) state<span class="sc">$</span>tuning<span class="sc">$</span>models <span class="cf">else</span> state<span class="sc">$</span>tuning<span class="sc">$</span>models[[part<span class="sc">$</span>pair_id]]</span>
+<span id="cb9-64"><a href="#cb9-64" tabindex="-1"></a>      <span class="fu">unlist</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(part<span class="sc">$</span>postprocessing), <span class="cf">function</span>(path) {</span>
+<span id="cb9-65"><a href="#cb9-65" tabindex="-1"></a>        post <span class="ot">&lt;-</span> part<span class="sc">$</span>postprocessing[[path]]</span>
+<span id="cb9-66"><a href="#cb9-66" tabindex="-1"></a>        inner <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(post<span class="sc">$</span>inner_folds)) <span class="fu">list</span>(<span class="at">Holdout1 =</span> post) <span class="cf">else</span> post<span class="sc">$</span>inner_folds</span>
+<span id="cb9-67"><a href="#cb9-67" tabindex="-1"></a>        <span class="fu">lapply</span>(<span class="fu">names</span>(inner), <span class="cf">function</span>(j) <span class="fu">list</span>(<span class="at">pair =</span> part<span class="sc">$</span>rows, <span class="at">plan =</span> inner[[j]], <span class="at">search =</span> local[[path]][[j]]))</span>
+<span id="cb9-68"><a href="#cb9-68" tabindex="-1"></a>      }), <span class="at">recursive =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-69"><a href="#cb9-69" tabindex="-1"></a>    }), <span class="at">recursive =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-70"><a href="#cb9-70" tabindex="-1"></a>  }</span>
+<span id="cb9-71"><a href="#cb9-71" tabindex="-1"></a>  <span class="cf">for</span> (name <span class="cf">in</span> <span class="fu">names</span>(specs)) {</span>
+<span id="cb9-72"><a href="#cb9-72" tabindex="-1"></a>    d <span class="ot">&lt;-</span> specs[[name]]<span class="sc">$</span>data</span>
+<span id="cb9-73"><a href="#cb9-73" tabindex="-1"></a>    spec <span class="ot">&lt;-</span> specs[[name]]<span class="sc">$</span>spec</span>
+<span id="cb9-74"><a href="#cb9-74" tabindex="-1"></a>    regression <span class="ot">&lt;-</span> <span class="fu">is.numeric</span>(d<span class="sc">$</span>truth)</span>
+<span id="cb9-75"><a href="#cb9-75" tabindex="-1"></a>    metrics <span class="ot">&lt;-</span> <span class="cf">if</span> (regression) yardstick<span class="sc">::</span><span class="fu">metric_set</span>(yardstick<span class="sc">::</span>rmse) <span class="cf">else</span> yardstick<span class="sc">::</span><span class="fu">metric_set</span>(yardstick<span class="sc">::</span>mn_log_loss)</span>
+<span id="cb9-76"><a href="#cb9-76" tabindex="-1"></a>    <span class="co"># Repeated outer folds: exact (id, id2, .row, .config) coverage, no notes.</span></span>
+<span id="cb9-77"><a href="#cb9-77" tabindex="-1"></a>    outer <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">11</span>, rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">repeats =</span> <span class="dv">2</span>))</span>
+<span id="cb9-78"><a href="#cb9-78" tabindex="-1"></a>    result <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">fit_resamples</span>(spec, outer, <span class="at">metrics =</span> metrics,</span>
+<span id="cb9-79"><a href="#cb9-79" tabindex="-1"></a>      <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_resamples</span>(<span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">extract =</span> workflows<span class="sc">::</span>extract_fit_engine, <span class="at">allow_par =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb9-80"><a href="#cb9-80" tabindex="-1"></a>    states <span class="ot">&lt;-</span> checker<span class="sc">$</span><span class="fu">check_outer_identities</span>(result, outer, <span class="at">metrics =</span> <span class="dv">1</span><span class="dt">L</span>)<span class="sc">$</span>extracts</span>
+<span id="cb9-81"><a href="#cb9-81" tabindex="-1"></a>    <span class="cf">for</span> (h <span class="cf">in</span> <span class="fu">seq_along</span>(states)) {</span>
+<span id="cb9-82"><a href="#cb9-82" tabindex="-1"></a>      state <span class="ot">&lt;-</span> states[[h]]</span>
+<span id="cb9-83"><a href="#cb9-83" tabindex="-1"></a>      F_rows <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(outer<span class="sc">$</span>splits[[h]], <span class="st">&quot;analysis&quot;</span>); A_rows <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(outer<span class="sc">$</span>splits[[h]], <span class="st">&quot;assessment&quot;</span>)</span>
+<span id="cb9-84"><a href="#cb9-84" tabindex="-1"></a>      <span class="co"># Final rows after an optional option-selection share S.</span></span>
+<span id="cb9-85"><a href="#cb9-85" tabindex="-1"></a>      final <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(state<span class="sc">$</span>tuning<span class="sc">$</span>calibration)) F_rows <span class="cf">else</span> F_rows[state<span class="sc">$</span>tuning<span class="sc">$</span>calibration<span class="sc">$</span>final_rows]</span>
+<span id="cb9-86"><a href="#cb9-86" tabindex="-1"></a>      S_rows <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(state<span class="sc">$</span>tuning<span class="sc">$</span>calibration)) <span class="fu">integer</span>() <span class="cf">else</span> F_rows[state<span class="sc">$</span>tuning<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows]</span>
+<span id="cb9-87"><a href="#cb9-87" tabindex="-1"></a>      <span class="cf">for</span> (local <span class="cf">in</span> <span class="fu">searches</span>(state)) {</span>
+<span id="cb9-88"><a href="#cb9-88" tabindex="-1"></a>        rows <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(local<span class="sc">$</span>pair)) final <span class="cf">else</span> final[local<span class="sc">$</span>pair]</span>
+<span id="cb9-89"><a href="#cb9-89" tabindex="-1"></a>        B <span class="ot">&lt;-</span> rows[local<span class="sc">$</span>plan<span class="sc">$</span>B]</span>
+<span id="cb9-90"><a href="#cb9-90" tabindex="-1"></a>        search <span class="ot">&lt;-</span> local<span class="sc">$</span>search</span>
+<span id="cb9-91"><a href="#cb9-91" tabindex="-1"></a>        collected <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">collect_predictions</span>(search<span class="sc">$</span>native)</span>
+<span id="cb9-92"><a href="#cb9-92" tabindex="-1"></a>        <span class="fu">assert_conditions</span>(<span class="fu">identical</span>(search<span class="sc">$</span>B, local<span class="sc">$</span>plan<span class="sc">$</span>B), <span class="fu">identical</span>(local<span class="sc">$</span>plan<span class="sc">$</span>selected, search<span class="sc">$</span>selected),</span>
+<span id="cb9-93"><a href="#cb9-93" tabindex="-1"></a>          <span class="sc">!</span><span class="fu">any</span>(B <span class="sc">%in%</span> <span class="fu">c</span>(A_rows, S_rows, rows[local<span class="sc">$</span>plan<span class="sc">$</span>P])),</span>
+<span id="cb9-94"><a href="#cb9-94" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">sort</span>(<span class="fu">unique</span>(collected<span class="sc">$</span>.row)), <span class="fu">seq_along</span>(B)),</span>
+<span id="cb9-95"><a href="#cb9-95" tabindex="-1"></a>          search<span class="sc">$</span>chosen <span class="sc">%in%</span> search<span class="sc">$</span>candidates<span class="sc">$</span>id[search<span class="sc">$</span>candidates<span class="sc">$</span>status <span class="sc">==</span> <span class="st">&quot;eligible&quot;</span>])</span>
+<span id="cb9-96"><a href="#cb9-96" tabindex="-1"></a>      }</span>
+<span id="cb9-97"><a href="#cb9-97" tabindex="-1"></a>    }</span>
+<span id="cb9-98"><a href="#cb9-98" tabindex="-1"></a>    n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(d); A <span class="ot">&lt;-</span> <span class="fu">seq.int</span>(.<span class="dv">8</span> <span class="sc">*</span> n <span class="sc">+</span> <span class="dv">1</span>, n)</span>
+<span id="cb9-99"><a href="#cb9-99" tabindex="-1"></a>    split <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">make_splits</span>(<span class="fu">list</span>(<span class="at">analysis =</span> <span class="fu">seq_len</span>(.<span class="dv">8</span> <span class="sc">*</span> n), <span class="at">assessment =</span> A), d)</span>
+<span id="cb9-100"><a href="#cb9-100" tabindex="-1"></a>    last <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">last_fit</span>(spec, split, <span class="at">metrics =</span> metrics)</span>
+<span id="cb9-101"><a href="#cb9-101" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">extract_workflow</span>(last)</span>
+<span id="cb9-102"><a href="#cb9-102" tabindex="-1"></a>    new <span class="ot">&lt;-</span> d[A, <span class="fu">setdiff</span>(<span class="fu">names</span>(d), <span class="st">&quot;truth&quot;</span>)]</span>
+<span id="cb9-103"><a href="#cb9-103" tabindex="-1"></a>    changed <span class="ot">&lt;-</span> d</span>
+<span id="cb9-104"><a href="#cb9-104" tabindex="-1"></a>    changed<span class="sc">$</span>truth[A] <span class="ot">&lt;-</span> <span class="cf">if</span> (regression) changed<span class="sc">$</span>truth[A] <span class="sc">+</span> <span class="dv">100</span> <span class="cf">else</span> <span class="fu">rev</span>(changed<span class="sc">$</span>truth[A])</span>
+<span id="cb9-105"><a href="#cb9-105" tabindex="-1"></a>    other <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">last_fit</span>(spec, rsample<span class="sc">::</span><span class="fu">make_splits</span>(<span class="fu">list</span>(<span class="at">analysis =</span> <span class="fu">seq_len</span>(.<span class="dv">8</span> <span class="sc">*</span> n), <span class="at">assessment =</span> A), changed), <span class="at">metrics =</span> metrics)</span>
+<span id="cb9-106"><a href="#cb9-106" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">venn_abers_details</span>(fit, new), <span class="fu">venn_abers_details</span>(tune<span class="sc">::</span><span class="fu">extract_workflow</span>(other), new)))</span>
+<span id="cb9-107"><a href="#cb9-107" tabindex="-1"></a>    tuning <span class="ot">&lt;-</span> <span class="fu">venn_abers_tuning</span>(fit)</span>
+<span id="cb9-108"><a href="#cb9-108" tabindex="-1"></a>    <span class="fu">cat</span>(name, <span class="st">&quot;: searches&quot;</span>, <span class="fu">length</span>(<span class="fu">searches</span>(workflows<span class="sc">::</span><span class="fu">extract_fit_engine</span>(fit))),</span>
+<span id="cb9-109"><a href="#cb9-109" tabindex="-1"></a>      <span class="st">&quot;; observed base fits&quot;</span>, tuning<span class="sc">$</span>cost<span class="sc">$</span>observed_base_fits, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-110"><a href="#cb9-110" tabindex="-1"></a>    cases[[name]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">new =</span> new)</span>
+<span id="cb9-111"><a href="#cb9-111" tabindex="-1"></a>  }</span>
+<span id="cb9-112"><a href="#cb9-112" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">length</span>(cases) <span class="sc">==</span> <span class="dv">5</span><span class="dt">L</span>)</span>
+<span id="cb9-113"><a href="#cb9-113" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="postprocessing-bayes" class="section level2">
+<h2>Bayes selection with postprocessing</h2>
+<p><code>postprocessing-bayes.R</code>: Inspect local search budgets,
+complete candidate histories and recorded failures across learned
+compositions.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Stepwise Bayes selection with learned postprocessing. As with Grid, every</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co"># engine/recipe search runs inside its own B (each VA source, inner ensemble</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co"># pair and full F composition, per class pair for pairwise OvO); P, C, the outer</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># assessment A and a reserved option-selection share S never enter it. Only</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co"># complete valid candidates feed the next GP. Failed candidates stay in the</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co"># history with their reasons and spend budget; too few valid initial points stop</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co"># the fit with a clear error, never a switch to Grid.</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;assertions.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>))</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;vennabers&quot;</span>, <span class="st">&quot;parsnip&quot;</span>, <span class="st">&quot;rlang&quot;</span>, <span class="st">&quot;withr&quot;</span>, <span class="st">&quot;workflows&quot;</span>, <span class="st">&quot;recipes&quot;</span>, <span class="st">&quot;rsample&quot;</span>, <span class="st">&quot;tune&quot;</span>, <span class="st">&quot;dials&quot;</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="st">&quot;yardstick&quot;</span>, <span class="st">&quot;tailor&quot;</span>, <span class="st">&quot;probably&quot;</span>, <span class="st">&quot;nnet&quot;</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>cases <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">all</span>(<span class="fu">vapply</span>(packages, requireNamespace, <span class="fu">logical</span>(<span class="dv">1</span>), <span class="at">quietly =</span> <span class="cn">TRUE</span>))) {</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  <span class="fu">library</span>(vennabers)</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  checker <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="fu">sys.source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;check-encoded-evaluation.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>), checker)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  stratified <span class="ot">&lt;-</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">strata =</span> truth, <span class="at">pool =</span> <span class="dv">0</span>)</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  plain <span class="ot">&lt;-</span> <span class="cf">function</span>(d) rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>  bayes <span class="ot">&lt;-</span> <span class="cf">function</span>(upper, resamples, <span class="at">initial =</span> <span class="dv">3</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">3</span><span class="dt">L</span>) <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> initial, <span class="at">iter =</span> iter,</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>    <span class="at">param_info =</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_quant_param</span>(<span class="at">type =</span> <span class="st">&quot;integer&quot;</span>, <span class="at">range =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="dt">L</span>, upper),</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>      <span class="at">inclusive =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">TRUE</span>), <span class="at">label =</span> <span class="fu">c</span>(<span class="at">degree =</span> <span class="st">&quot;Degree&quot;</span>))),</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    <span class="at">resamples =</span> resamples, <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">4</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">no_improve =</span> <span class="dv">3</span><span class="dt">L</span>))</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  classes <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">7</span>, {</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>    truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>), <span class="dv">800</span>))</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">x =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">2400</span>, <span class="at">sd =</span> <span class="dv">3</span>) <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>)[truth],</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>      <span class="at">z =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">2400</span>, <span class="at">sd =</span> <span class="dv">3</span>) <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)[truth], <span class="at">truth =</span> truth)</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>  })</span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>  <span class="co"># z has four distinct values: step_poly(z) fails for degree &gt;= 4 in every B.</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>  binary <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">8</span>, {</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>    x <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>, <span class="at">sd =</span> <span class="fl">1.5</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>    z <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1200</span>, <span class="cn">TRUE</span>)</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">z =</span> z, <span class="at">truth =</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(stats<span class="sc">::</span><span class="fu">runif</span>(<span class="dv">1200</span>) <span class="sc">&lt;</span> stats<span class="sc">::</span><span class="fu">plogis</span>(x <span class="sc">-</span> .<span class="dv">3</span> <span class="sc">*</span> z <span class="sc">+</span> .<span class="dv">5</span>), <span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>)))</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>  })</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>  numeric <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">9</span>, {</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>    x <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>)</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">z =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>), <span class="at">truth =</span> <span class="dv">3</span> <span class="sc">+</span> x <span class="sc">-</span> .<span class="dv">5</span> <span class="sc">*</span> x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(<span class="dv">1200</span>, <span class="at">sd =</span> .<span class="dv">5</span>))</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>  })</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="cf">function</span>(d, engine, <span class="at">term =</span> <span class="st">&quot;x&quot;</span>) workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span> workflows<span class="sc">::</span><span class="fu">add_recipe</span>(</span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a>    recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x <span class="sc">+</span> z, d) <span class="sc">|&gt;</span> recipes<span class="sc">::</span><span class="fu">step_poly</span>(<span class="sc">!!</span>rlang<span class="sc">::</span><span class="fu">sym</span>(term), <span class="at">degree =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;degree&quot;</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a>    workflows<span class="sc">::</span><span class="fu">add_model</span>(engine)</span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a>  glm <span class="ot">&lt;-</span> parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>)</span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a>  nnet <span class="ot">&lt;-</span> parsnip<span class="sc">::</span><span class="fu">multinom_reg</span>(<span class="at">penalty =</span> .<span class="dv">1</span>) <span class="sc">|&gt;</span> parsnip<span class="sc">::</span><span class="fu">set_engine</span>(<span class="st">&quot;nnet&quot;</span>, <span class="at">trace =</span> <span class="cn">FALSE</span>, <span class="at">maxit =</span> <span class="dv">1000</span>)</span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a>  sigmoid <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;sigmoid&quot;</span>, <span class="at">sigmoid_input =</span> <span class="st">&quot;probability&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>)</span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a>  specs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a>    <span class="co"># Budget and failure case: degrees 4 to 6 fail in every B, initial or proposed.</span></span>
+<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a>    <span class="at">binary_sigmoid_joint =</span> <span class="fu">list</span>(<span class="at">data =</span> binary, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(binary, glm, <span class="st">&quot;z&quot;</span>), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a>      <span class="at">prediction_model =</span> <span class="st">&quot;full&quot;</span>, <span class="at">seed =</span> <span class="dv">3</span>, <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>, <span class="at">model =</span> <span class="fu">bayes</span>(<span class="dv">6</span><span class="dt">L</span>, stratified)),</span>
+<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a>      <span class="at">postprocessing =</span> sigmoid)),</span>
+<span id="cb10-48"><a href="#cb10-48" tabindex="-1"></a>    <span class="at">pairwise_tailor_two_stage =</span> <span class="fu">list</span>(<span class="at">data =</span> classes[<span class="fu">c</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;z&quot;</span>, <span class="st">&quot;truth&quot;</span>)], <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(classes, glm), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb10-49"><a href="#cb10-49" tabindex="-1"></a>      <span class="at">classification =</span> <span class="st">&quot;ovo&quot;</span>, <span class="at">model_training =</span> <span class="st">&quot;pairwise&quot;</span>, <span class="at">seed =</span> <span class="dv">4</span>,</span>
+<span id="cb10-50"><a href="#cb10-50" tabindex="-1"></a>      <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;two_stage&quot;</span>, <span class="at">model =</span> <span class="fu">bayes</span>(<span class="dv">2</span><span class="dt">L</span>, stratified, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>)),</span>
+<span id="cb10-51"><a href="#cb10-51" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;tailor_logistic&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;ensemble&quot;</span>, <span class="at">v =</span> <span class="dv">2</span>))),</span>
+<span id="cb10-52"><a href="#cb10-52" tabindex="-1"></a>    <span class="at">ovr_multinomial_options =</span> <span class="fu">list</span>(<span class="at">data =</span> classes, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(classes, nnet), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb10-53"><a href="#cb10-53" tabindex="-1"></a>      <span class="at">classification =</span> <span class="st">&quot;ovr&quot;</span>, <span class="at">seed =</span> <span class="dv">5</span>, <span class="at">loss =</span> tune<span class="sc">::</span><span class="fu">tune</span>(<span class="st">&quot;va_loss&quot;</span>),</span>
+<span id="cb10-54"><a href="#cb10-54" tabindex="-1"></a>      <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;two_stage&quot;</span>, <span class="at">selection_prop =</span> .<span class="dv">5</span>,</span>
+<span id="cb10-55"><a href="#cb10-55" tabindex="-1"></a>        <span class="at">model =</span> <span class="fu">bayes</span>(<span class="dv">2</span><span class="dt">L</span>, stratified, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>),</span>
+<span id="cb10-56"><a href="#cb10-56" tabindex="-1"></a>        <span class="at">calibration =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;bayes&quot;</span>, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>, <span class="at">iter =</span> <span class="dv">1</span><span class="dt">L</span>, <span class="at">resamples =</span> stratified,</span>
+<span id="cb10-57"><a href="#cb10-57" tabindex="-1"></a>          <span class="at">param_info =</span> dials<span class="sc">::</span><span class="fu">parameters</span>(dials<span class="sc">::</span><span class="fu">new_qual_param</span>(<span class="at">type =</span> <span class="st">&quot;character&quot;</span>, <span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>),</span>
+<span id="cb10-58"><a href="#cb10-58" tabindex="-1"></a>            <span class="at">label =</span> <span class="fu">c</span>(<span class="at">va_loss =</span> <span class="st">&quot;Loss&quot;</span>))), <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_bayes</span>(<span class="at">seed =</span> <span class="dv">5</span>, <span class="at">save_pred =</span> <span class="cn">TRUE</span>))),</span>
+<span id="cb10-59"><a href="#cb10-59" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;tailor_multinomial&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>))),</span>
+<span id="cb10-60"><a href="#cb10-60" tabindex="-1"></a>    <span class="at">regression_linear_joint =</span> <span class="fu">list</span>(<span class="at">data =</span> numeric, <span class="at">spec =</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(numeric, parsnip<span class="sc">::</span><span class="fu">linear_reg</span>()), <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb10-61"><a href="#cb10-61" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">seed =</span> <span class="dv">6</span>, <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>, <span class="at">model =</span> <span class="fu">bayes</span>(<span class="dv">3</span><span class="dt">L</span>, plain)),</span>
+<span id="cb10-62"><a href="#cb10-62" tabindex="-1"></a>      <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;tailor_linear&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>))))</span>
+<span id="cb10-63"><a href="#cb10-63" tabindex="-1"></a>  <span class="co"># Every local search with its inner B/P plan and, for pairwise, its pair rows.</span></span>
+<span id="cb10-64"><a href="#cb10-64" tabindex="-1"></a>  searches <span class="ot">&lt;-</span> <span class="cf">function</span>(state) {</span>
+<span id="cb10-65"><a href="#cb10-65" tabindex="-1"></a>    parts <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(state<span class="sc">$</span>pair_models)) <span class="fu">list</span>(state) <span class="cf">else</span> state<span class="sc">$</span>pair_models</span>
+<span id="cb10-66"><a href="#cb10-66" tabindex="-1"></a>    <span class="fu">unlist</span>(<span class="fu">lapply</span>(parts, <span class="cf">function</span>(part) {</span>
+<span id="cb10-67"><a href="#cb10-67" tabindex="-1"></a>      local <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(part<span class="sc">$</span>pair_id)) state<span class="sc">$</span>tuning<span class="sc">$</span>models <span class="cf">else</span> state<span class="sc">$</span>tuning<span class="sc">$</span>models[[part<span class="sc">$</span>pair_id]]</span>
+<span id="cb10-68"><a href="#cb10-68" tabindex="-1"></a>      <span class="fu">unlist</span>(<span class="fu">lapply</span>(<span class="fu">names</span>(part<span class="sc">$</span>postprocessing), <span class="cf">function</span>(path) {</span>
+<span id="cb10-69"><a href="#cb10-69" tabindex="-1"></a>        post <span class="ot">&lt;-</span> part<span class="sc">$</span>postprocessing[[path]]</span>
+<span id="cb10-70"><a href="#cb10-70" tabindex="-1"></a>        inner <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(post<span class="sc">$</span>inner_folds)) <span class="fu">list</span>(<span class="at">Holdout1 =</span> post) <span class="cf">else</span> post<span class="sc">$</span>inner_folds</span>
+<span id="cb10-71"><a href="#cb10-71" tabindex="-1"></a>        <span class="fu">lapply</span>(<span class="fu">names</span>(inner), <span class="cf">function</span>(j) <span class="fu">list</span>(<span class="at">pair =</span> part<span class="sc">$</span>rows, <span class="at">plan =</span> inner[[j]], <span class="at">search =</span> local[[path]][[j]]))</span>
+<span id="cb10-72"><a href="#cb10-72" tabindex="-1"></a>      }), <span class="at">recursive =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-73"><a href="#cb10-73" tabindex="-1"></a>    }), <span class="at">recursive =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-74"><a href="#cb10-74" tabindex="-1"></a>  }</span>
+<span id="cb10-75"><a href="#cb10-75" tabindex="-1"></a>  <span class="cf">for</span> (name <span class="cf">in</span> <span class="fu">names</span>(specs)) {</span>
+<span id="cb10-76"><a href="#cb10-76" tabindex="-1"></a>    d <span class="ot">&lt;-</span> specs[[name]]<span class="sc">$</span>data</span>
+<span id="cb10-77"><a href="#cb10-77" tabindex="-1"></a>    spec <span class="ot">&lt;-</span> specs[[name]]<span class="sc">$</span>spec</span>
+<span id="cb10-78"><a href="#cb10-78" tabindex="-1"></a>    regression <span class="ot">&lt;-</span> <span class="fu">is.numeric</span>(d<span class="sc">$</span>truth)</span>
+<span id="cb10-79"><a href="#cb10-79" tabindex="-1"></a>    metrics <span class="ot">&lt;-</span> <span class="cf">if</span> (regression) yardstick<span class="sc">::</span><span class="fu">metric_set</span>(yardstick<span class="sc">::</span>rmse) <span class="cf">else</span> yardstick<span class="sc">::</span><span class="fu">metric_set</span>(yardstick<span class="sc">::</span>mn_log_loss)</span>
+<span id="cb10-80"><a href="#cb10-80" tabindex="-1"></a>    <span class="co"># Repeated outer folds: exact (id, id2, .row, .config) coverage, no notes.</span></span>
+<span id="cb10-81"><a href="#cb10-81" tabindex="-1"></a>    outer <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(<span class="dv">11</span>, rsample<span class="sc">::</span><span class="fu">vfold_cv</span>(d, <span class="at">v =</span> <span class="dv">2</span>, <span class="at">repeats =</span> <span class="dv">2</span>))</span>
+<span id="cb10-82"><a href="#cb10-82" tabindex="-1"></a>    result <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">fit_resamples</span>(spec, outer, <span class="at">metrics =</span> metrics,</span>
+<span id="cb10-83"><a href="#cb10-83" tabindex="-1"></a>      <span class="at">control =</span> tune<span class="sc">::</span><span class="fu">control_resamples</span>(<span class="at">save_pred =</span> <span class="cn">TRUE</span>, <span class="at">extract =</span> workflows<span class="sc">::</span>extract_fit_engine, <span class="at">allow_par =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb10-84"><a href="#cb10-84" tabindex="-1"></a>    states <span class="ot">&lt;-</span> checker<span class="sc">$</span><span class="fu">check_outer_identities</span>(result, outer, <span class="at">metrics =</span> <span class="dv">1</span><span class="dt">L</span>)<span class="sc">$</span>extracts</span>
+<span id="cb10-85"><a href="#cb10-85" tabindex="-1"></a>    <span class="cf">for</span> (h <span class="cf">in</span> <span class="fu">seq_along</span>(states)) {</span>
+<span id="cb10-86"><a href="#cb10-86" tabindex="-1"></a>      state <span class="ot">&lt;-</span> states[[h]]</span>
+<span id="cb10-87"><a href="#cb10-87" tabindex="-1"></a>      F_rows <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(outer<span class="sc">$</span>splits[[h]], <span class="st">&quot;analysis&quot;</span>); A_rows <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(outer<span class="sc">$</span>splits[[h]], <span class="st">&quot;assessment&quot;</span>)</span>
+<span id="cb10-88"><a href="#cb10-88" tabindex="-1"></a>      <span class="co"># Final rows after an optional option-selection share S.</span></span>
+<span id="cb10-89"><a href="#cb10-89" tabindex="-1"></a>      final <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(state<span class="sc">$</span>tuning<span class="sc">$</span>calibration)) F_rows <span class="cf">else</span> F_rows[state<span class="sc">$</span>tuning<span class="sc">$</span>calibration<span class="sc">$</span>final_rows]</span>
+<span id="cb10-90"><a href="#cb10-90" tabindex="-1"></a>      S_rows <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(state<span class="sc">$</span>tuning<span class="sc">$</span>calibration)) <span class="fu">integer</span>() <span class="cf">else</span> F_rows[state<span class="sc">$</span>tuning<span class="sc">$</span>calibration<span class="sc">$</span>selection_rows]</span>
+<span id="cb10-91"><a href="#cb10-91" tabindex="-1"></a>      <span class="cf">for</span> (local <span class="cf">in</span> <span class="fu">searches</span>(state)) {</span>
+<span id="cb10-92"><a href="#cb10-92" tabindex="-1"></a>        rows <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(local<span class="sc">$</span>pair)) final <span class="cf">else</span> final[local<span class="sc">$</span>pair]</span>
+<span id="cb10-93"><a href="#cb10-93" tabindex="-1"></a>        B <span class="ot">&lt;-</span> rows[local<span class="sc">$</span>plan<span class="sc">$</span>B]</span>
+<span id="cb10-94"><a href="#cb10-94" tabindex="-1"></a>        search <span class="ot">&lt;-</span> local<span class="sc">$</span>search</span>
+<span id="cb10-95"><a href="#cb10-95" tabindex="-1"></a>        eligible <span class="ot">&lt;-</span> search<span class="sc">$</span>candidates<span class="sc">$</span>status <span class="sc">==</span> <span class="st">&quot;eligible&quot;</span></span>
+<span id="cb10-96"><a href="#cb10-96" tabindex="-1"></a>        <span class="co"># The GP only saw complete valid candidates, all on rows of this B.</span></span>
+<span id="cb10-97"><a href="#cb10-97" tabindex="-1"></a>        <span class="fu">assert_conditions</span>(<span class="fu">identical</span>(search<span class="sc">$</span>B, local<span class="sc">$</span>plan<span class="sc">$</span>B), <span class="fu">identical</span>(local<span class="sc">$</span>plan<span class="sc">$</span>selected, search<span class="sc">$</span>selected),</span>
+<span id="cb10-98"><a href="#cb10-98" tabindex="-1"></a>          <span class="sc">!</span><span class="fu">any</span>(B <span class="sc">%in%</span> <span class="fu">c</span>(A_rows, S_rows, rows[local<span class="sc">$</span>plan<span class="sc">$</span>P])),</span>
+<span id="cb10-99"><a href="#cb10-99" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">sort</span>(<span class="fu">unique</span>(tune<span class="sc">::</span><span class="fu">collect_predictions</span>(search<span class="sc">$</span>native)<span class="sc">$</span>.row)), <span class="fu">seq_along</span>(B)),</span>
+<span id="cb10-100"><a href="#cb10-100" tabindex="-1"></a>          search<span class="sc">$</span>chosen <span class="sc">%in%</span> search<span class="sc">$</span>candidates<span class="sc">$</span>id[eligible], <span class="sc">!</span><span class="fu">anyDuplicated</span>(search<span class="sc">$</span>candidates<span class="sc">$</span>id),</span>
+<span id="cb10-101"><a href="#cb10-101" tabindex="-1"></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(tune<span class="sc">::</span><span class="fu">collect_metrics</span>(search<span class="sc">$</span>native)<span class="sc">$</span>degree), search<span class="sc">$</span>candidates<span class="sc">$</span>degree[eligible]),</span>
+<span id="cb10-102"><a href="#cb10-102" tabindex="-1"></a>          search<span class="sc">$</span>cost<span class="sc">$</span>candidate_evaluations <span class="sc">==</span> search<span class="sc">$</span>attempts <span class="sc">*</span> <span class="fu">length</span>(search<span class="sc">$</span>resamples))</span>
+<span id="cb10-103"><a href="#cb10-103" tabindex="-1"></a>        <span class="cf">if</span> (name <span class="sc">==</span> <span class="st">&quot;binary_sigmoid_joint&quot;</span>) {</span>
+<span id="cb10-104"><a href="#cb10-104" tabindex="-1"></a>          <span class="co"># Failed initial and continuation candidates keep their IDs and reasons.</span></span>
+<span id="cb10-105"><a href="#cb10-105" tabindex="-1"></a>          <span class="fu">assert_conditions</span>(<span class="fu">any</span>(<span class="sc">!</span>eligible), <span class="fu">identical</span>(<span class="sc">!</span>eligible, search<span class="sc">$</span>candidates<span class="sc">$</span>degree <span class="sc">&gt;=</span> <span class="dv">4</span><span class="dt">L</span>),</span>
+<span id="cb10-106"><a href="#cb10-106" tabindex="-1"></a>            <span class="fu">grepl</span>(<span class="st">&quot;must be less than number of unique points&quot;</span>, <span class="fu">paste</span>(search<span class="sc">$</span>notes<span class="sc">$</span>note, <span class="at">collapse =</span> <span class="st">&quot; &quot;</span>)))</span>
+<span id="cb10-107"><a href="#cb10-107" tabindex="-1"></a>        }</span>
+<span id="cb10-108"><a href="#cb10-108" tabindex="-1"></a>      }</span>
+<span id="cb10-109"><a href="#cb10-109" tabindex="-1"></a>    }</span>
+<span id="cb10-110"><a href="#cb10-110" tabindex="-1"></a>    n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(d); A <span class="ot">&lt;-</span> <span class="fu">seq.int</span>(.<span class="dv">8</span> <span class="sc">*</span> n <span class="sc">+</span> <span class="dv">1</span>, n)</span>
+<span id="cb10-111"><a href="#cb10-111" tabindex="-1"></a>    split <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">make_splits</span>(<span class="fu">list</span>(<span class="at">analysis =</span> <span class="fu">seq_len</span>(.<span class="dv">8</span> <span class="sc">*</span> n), <span class="at">assessment =</span> A), d)</span>
+<span id="cb10-112"><a href="#cb10-112" tabindex="-1"></a>    last <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">last_fit</span>(spec, split, <span class="at">metrics =</span> metrics)</span>
+<span id="cb10-113"><a href="#cb10-113" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">extract_workflow</span>(last)</span>
+<span id="cb10-114"><a href="#cb10-114" tabindex="-1"></a>    new <span class="ot">&lt;-</span> d[A, <span class="fu">setdiff</span>(<span class="fu">names</span>(d), <span class="st">&quot;truth&quot;</span>)]</span>
+<span id="cb10-115"><a href="#cb10-115" tabindex="-1"></a>    changed <span class="ot">&lt;-</span> d</span>
+<span id="cb10-116"><a href="#cb10-116" tabindex="-1"></a>    changed<span class="sc">$</span>truth[A] <span class="ot">&lt;-</span> <span class="cf">if</span> (regression) changed<span class="sc">$</span>truth[A] <span class="sc">+</span> <span class="dv">100</span> <span class="cf">else</span> <span class="fu">rev</span>(changed<span class="sc">$</span>truth[A])</span>
+<span id="cb10-117"><a href="#cb10-117" tabindex="-1"></a>    other <span class="ot">&lt;-</span> tune<span class="sc">::</span><span class="fu">last_fit</span>(spec, rsample<span class="sc">::</span><span class="fu">make_splits</span>(<span class="fu">list</span>(<span class="at">analysis =</span> <span class="fu">seq_len</span>(.<span class="dv">8</span> <span class="sc">*</span> n), <span class="at">assessment =</span> A), changed), <span class="at">metrics =</span> metrics)</span>
+<span id="cb10-118"><a href="#cb10-118" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">venn_abers_details</span>(fit, new), <span class="fu">venn_abers_details</span>(tune<span class="sc">::</span><span class="fu">extract_workflow</span>(other), new)))</span>
+<span id="cb10-119"><a href="#cb10-119" tabindex="-1"></a>    local <span class="ot">&lt;-</span> <span class="fu">searches</span>(workflows<span class="sc">::</span><span class="fu">extract_fit_engine</span>(fit))</span>
+<span id="cb10-120"><a href="#cb10-120" tabindex="-1"></a>    <span class="fu">cat</span>(name, <span class="st">&quot;: searches&quot;</span>, <span class="fu">length</span>(local),</span>
+<span id="cb10-121"><a href="#cb10-121" tabindex="-1"></a>      <span class="st">&quot;; attempts&quot;</span>, <span class="fu">paste</span>(<span class="fu">vapply</span>(local, <span class="cf">function</span>(x) x<span class="sc">$</span>search<span class="sc">$</span>attempts, <span class="dv">1</span><span class="dt">L</span>), <span class="at">collapse =</span> <span class="st">&quot;/&quot;</span>),</span>
+<span id="cb10-122"><a href="#cb10-122" tabindex="-1"></a>      <span class="st">&quot;; stop&quot;</span>, <span class="fu">paste</span>(<span class="fu">unique</span>(<span class="fu">vapply</span>(local, <span class="cf">function</span>(x) x<span class="sc">$</span>search<span class="sc">$</span>stop_reason, <span class="st">&quot;&quot;</span>)), <span class="at">collapse =</span> <span class="st">&quot;/&quot;</span>),</span>
+<span id="cb10-123"><a href="#cb10-123" tabindex="-1"></a>      <span class="st">&quot;; excluded&quot;</span>, <span class="fu">sum</span>(<span class="fu">vapply</span>(local, <span class="cf">function</span>(x) x<span class="sc">$</span>search<span class="sc">$</span>cost<span class="sc">$</span>excluded_candidates, <span class="dv">1</span><span class="dt">L</span>)),</span>
+<span id="cb10-124"><a href="#cb10-124" tabindex="-1"></a>      <span class="st">&quot;; observed base fits&quot;</span>, <span class="fu">venn_abers_tuning</span>(fit)<span class="sc">$</span>cost<span class="sc">$</span>observed_base_fits, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-125"><a href="#cb10-125" tabindex="-1"></a>    cases[[name]] <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">new =</span> new)</span>
+<span id="cb10-126"><a href="#cb10-126" tabindex="-1"></a>  }</span>
+<span id="cb10-127"><a href="#cb10-127" tabindex="-1"></a>  <span class="co"># Two initial points (2 and 5) leave one valid candidate: a clear error, no Grid fallback.</span></span>
+<span id="cb10-128"><a href="#cb10-128" tabindex="-1"></a>  short <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(<span class="fu">base</span>(binary, glm, <span class="st">&quot;z&quot;</span>), <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">3</span>,</span>
+<span id="cb10-129"><a href="#cb10-129" tabindex="-1"></a>    <span class="at">tuning =</span> <span class="fu">list</span>(<span class="at">strategy =</span> <span class="st">&quot;joint&quot;</span>, <span class="at">model =</span> <span class="fu">bayes</span>(<span class="dv">6</span><span class="dt">L</span>, stratified, <span class="at">initial =</span> <span class="dv">2</span><span class="dt">L</span>)), <span class="at">postprocessing =</span> sigmoid)</span>
+<span id="cb10-130"><a href="#cb10-130" tabindex="-1"></a>  failure <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb10-131"><a href="#cb10-131" tabindex="-1"></a>    generics<span class="sc">::</span><span class="fu">fit</span>(short, binary)</span>
+<span id="cb10-132"><a href="#cb10-132" tabindex="-1"></a>    <span class="st">&quot;&quot;</span></span>
+<span id="cb10-133"><a href="#cb10-133" tabindex="-1"></a>  }, <span class="at">error =</span> conditionMessage)</span>
+<span id="cb10-134"><a href="#cb10-134" tabindex="-1"></a>  <span class="fu">assert_conditions</span>(<span class="fu">grepl</span>(<span class="st">&quot;Bayes needs at least 2 complete initial model candidates; found 1&quot;</span>, failure),</span>
+<span id="cb10-135"><a href="#cb10-135" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="st">&quot;must be less than number of unique points&quot;</span>, failure))</span>
+<span id="cb10-136"><a href="#cb10-136" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">length</span>(cases) <span class="sc">==</span> <span class="dv">4</span><span class="dt">L</span>)</span>
+<span id="cb10-137"><a href="#cb10-137" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

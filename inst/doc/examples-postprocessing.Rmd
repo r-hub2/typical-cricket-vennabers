@@ -1,0 +1,119 @@
+---
+title: "Example scripts: learned postprocessing"
+description: "Sigmoid, Tailor and isotonic holdouts, inner ensembles and all 80 fixed compositions."
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Example scripts: learned postprocessing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Learn a postprocessor between model training and VA calibration, using separate
+B/P/C data roles. The examples cover holdouts, inner ensembles, pairwise OvO and
+full prediction compositions. Install the optional workflow and assessment
+packages used in each script; Tailor examples additionally use `tailor` and
+`probably`.
+
+Start with `vignette("workflows", package = "vennabers")` for the
+step-by-step guide. `?vennabers_examples` indexes all four example collections.
+
+## Choose an example
+
+- [Binary Sigmoid holdouts](#sigmoid-holdout)
+- [Binary Tailor holdouts](#tailor-holdout)
+- [Shared multiclass Tailor holdouts](#tailor-multiclass-holdout)
+- [Regression Tailor holdouts](#tailor-regression-holdout)
+- [Regression isotonic holdouts](#isotonic-regression-holdout)
+- [Binary postprocessing ensembles](#binary-ensemble)
+- [Shared multiclass postprocessing ensembles](#multiclass-ensemble)
+- [Regression postprocessing ensembles](#regression-ensemble)
+- [Pairwise OvO postprocessing](#pairwise-postprocessing)
+- [Full-model postprocessing compositions](#full-postprocessing)
+
+## Running an example
+
+Each heading below names an installed script. To inspect and run one:
+
+```{r run-example, eval=FALSE, purl=FALSE}
+script <- system.file("examples", "sigmoid-holdout.R", package = "vennabers")
+file.show(script)
+source(script)
+```
+
+Replace the filename to run another script. The listings below show the complete
+code without executing it during documentation builds. Sourcing a script runs
+its fits and checks; resampling, tuning and composition matrices can take longer
+than the introductory guides.
+
+## Binary Sigmoid holdouts {#sigmoid-holdout}
+
+`sigmoid-holdout.R`: Compare probability and GLM-link inputs with Inductive/Cross calibration, native resampling and final assessment.
+
+```{r sigmoid-holdout, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "sigmoid-holdout.R", package = "vennabers"))}
+```
+
+## Binary Tailor holdouts {#tailor-holdout}
+
+`tailor-holdout.R`: Learn logistic postprocessing on separate data and inspect diagnostics, resampling and last_fit results.
+
+```{r tailor-holdout, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "tailor-holdout.R", package = "vennabers"))}
+```
+
+## Shared multiclass Tailor holdouts {#tailor-multiclass-holdout}
+
+`tailor-multiclass-holdout.R`: Use logistic postprocessing for two classes and multinomial postprocessing for three or more, with encoded names and native evaluation.
+
+```{r tailor-multiclass-holdout, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "tailor-multiclass-holdout.R", package = "vennabers"))}
+```
+
+## Regression Tailor holdouts {#tailor-regression-holdout}
+
+`tailor-regression-holdout.R`: Learn a linear adjustment before IVAR/CVAR and evaluate the complete procedure.
+
+```{r tailor-regression-holdout, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "tailor-regression-holdout.R", package = "vennabers"))}
+```
+
+## Regression isotonic holdouts {#isotonic-regression-holdout}
+
+`isotonic-regression-holdout.R`: Learn reference numeric isotonic postprocessing on separate P data before IVAR/CVAR.
+
+```{r isotonic-regression-holdout, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "isotonic-regression-holdout.R", package = "vennabers"))}
+```
+
+## Binary postprocessing ensembles {#binary-ensemble}
+
+`binary-ensemble.R`: Average complete inner model/postprocessor predictions before VA calibration on held-out C data.
+
+```{r binary-ensemble, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "binary-ensemble.R", package = "vennabers"))}
+```
+
+## Shared multiclass postprocessing ensembles {#multiclass-ensemble}
+
+`multiclass-ensemble.R`: Average finished class vectors with equal inner-pair weights, preserving encoded names and outer assessment identities.
+
+```{r multiclass-ensemble, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "multiclass-ensemble.R", package = "vennabers"))}
+```
+
+## Regression postprocessing ensembles {#regression-ensemble}
+
+`regression-ensemble.R`: Compare linear and isotonic numeric ensembles and check that held-out data stay outside learning.
+
+```{r regression-ensemble, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "regression-ensemble.R", package = "vennabers"))}
+```
+
+## Pairwise OvO postprocessing {#pairwise-postprocessing}
+
+`pairwise-postprocessing.R`: Distinguish class pairs from inner B/P pairs and evaluate complete holdout or ensemble compositions.
+
+```{r pairwise-postprocessing, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "pairwise-postprocessing.R", package = "vennabers"))}
+```
+
+## Full-model postprocessing compositions {#full-postprocessing}
+
+`full-postprocessing.R`: Exercise all 80 fixed compositions through native evaluation and last_fit, with separate full-composition B/P plans.
+
+```{r full-postprocessing, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "full-postprocessing.R", package = "vennabers"))}
+```

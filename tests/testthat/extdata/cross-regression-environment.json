@@ -1,0 +1,29 @@
+{
+  "commit": "0e7b4bc575ce230134576ba1c76688d46bf99ac7",
+  "source_version": "1.5.4",
+  "module_sha256": "ea7816e8832eef3f0fa129d2bb80dffae4efcb785f37f083fc087136edb720a5",
+  "seed": 20260908,
+  "python": "3.14.6",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.0",
+    "pandas": "3.0.5"
+  },
+  "cases": 80,
+  "folds": 220,
+  "aggregate_rows": 560,
+  "component_rows": 1540,
+  "direct_valid_rows": 1243,
+  "direct_defect_rows": 297,
+  "component_reference": "Same pinned IVAR components and retained defects as regression-reference.md",
+  "aggregate_reference": "Separate math.fsum of IVAR points, lower and upper endpoints divided by fold count",
+  "scale": "Predeclared unit: 1, 1e-12, 1e120; shifted cases have unit 1 and shift 1e5",
+  "fixture_sha256": {
+    "cross-regression-aggregate.csv": "fec60e5adedd1b6f41b4ba516d3279bdd14e50b61a7537d1e50bc51772df5db0",
+    "cross-regression-calibration.csv": "1b89b4195f6a4665e4b02a1359fc443bcfe9b3b06492e6dbcabd650dcc00f018",
+    "cross-regression-options.csv": "5a68f9ac8c31bcf16314fa2c72c7dfe5fd35bd45706a7ecd9c2530016a41b54f",
+    "cross-regression-predictions.csv": "4d15ed902c9d4367eb625b963ee435beb4056f54940d46eb3d14db553d51ecd7"
+  }
+}

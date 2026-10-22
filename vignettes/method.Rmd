@@ -1,0 +1,426 @@
+---
+title: "Venn-Abers methods and their guarantees"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Venn-Abers methods and their guarantees}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE)
+```
+
+This guide explains what the functions in `vennabers` compute and what the
+literature guarantees about it. It comes before the practical guides: read it
+to understand the method, then continue with
+`vignette("manual-calibration", package = "vennabers")` for the interfaces.
+Every formula below is checked against the package by a code chunk that uses
+only base R and the manual functions; the vignette stops if a check fails.
+
+```{r library}
+library(vennabers)
+```
+
+## Calibration as a problem
+
+A classifier that outputs a probability $P$ for the event $Y = 1$ is
+**calibrated** if the event happens with that frequency among cases that
+receive it: $E(Y \mid P) = P$. Many models rank cases well but are
+over- or underconfident, so their scores need a calibration map from score to
+probability. The map is learned on a **calibration set**: observations that
+the model never saw while it was trained, preprocessed or tuned.
+
+Two classical calibration maps are:
+
+- **Platt scaling** (Platt, 2000) fits a sigmoid $1 / (1 + \exp(As + B))$ to
+  the scores $s$ by maximum likelihood. Two parameters make it stable on small
+  calibration sets, but it cannot correct miscalibration whose shape is not a
+  sigmoid, however much data there is (Vovk, Petej and Fedorova, 2015,
+  Section 5.1).
+- **Isotonic calibration** (Zadrozny and Elkan, 2002) fits any non-decreasing
+  map with the pool-adjacent-violators algorithm. It learns arbitrary
+  monotone shapes but overfits small calibration sets and can output exactly 0
+  or 1, which gives an infinite log loss as soon as such a case has the other
+  outcome (Vovk, Petej and Fedorova, 2015, Section 5.2).
+
+Venn-Abers predictors (Vovk and Petej, 2014) keep the flexibility of isotonic
+regression and add a validity guarantee. Instead of one isotonic fit on the
+calibration set they make two, each including the new case with one of the
+two possible labels. `vignette("comparison", package = "vennabers")` applies
+all three maps to one simulated data set.
+
+## Inductive Venn-Abers
+
+An **Inductive Venn-Abers predictor** (IVAP; Vovk, Petej and Fedorova, 2015,
+Section 2) proceeds as follows:
+
+1. Split the training data into a **proper training set** and a
+   **calibration set** of size $k$.
+2. Train the scoring model on the proper training set only.
+3. Compute the scores $s_1, \ldots, s_k$ of the calibration observations,
+   with labels $y_1, \ldots, y_k \in \{0, 1\}$.
+4. For a new case with score $s$, fit isotonic regression to
+   $(s_1, y_1), \ldots, (s_k, y_k), (s, 0)$ and call its value at $s$ $p_0$.
+   Fit it again to $(s_1, y_1), \ldots, (s_k, y_k), (s, 1)$ and call its value
+   at $s$ $p_1$.
+
+The prediction is the pair $(p_0, p_1)$, with $p_0 < p_1$: the probability of
+the event is either $p_0$ or $p_1$. In the package these are the columns
+`lower` and `upper` of `predict()` on a fit from `venn_abers()`. Tied scores are
+pooled, as in the paper's construction. The package computes all possible
+pairs once at fit time, so prediction only looks them up.
+
+The chunk below recomputes both values for one new case with
+`stats::isoreg()` and compares them with the package. The model is
+underconfident: its scores are flatter than the true event probabilities.
+
+```{r ivap-by-hand}
+set.seed(48)
+k <- 40
+x <- rnorm(k)
+truth <- runif(k) < plogis(2 * x)
+score <- plogis(0.5 * x)
+new_score <- plogis(0.5 * 0.3)
+
+# Value at the new case of the isotonic fit that includes it with `label`.
+isotonic_at_new <- function(score, label, new_score, new_label) {
+  scores <- c(score, new_score)
+  o <- order(scores)
+  fit <- stats::isoreg(scores[o], c(label, new_label)[o])
+  fit$yf[o == length(scores)]
+}
+p0 <- isotonic_at_new(score, truth, new_score, 0)
+p1 <- isotonic_at_new(score, truth, new_score, 1)
+
+calibrator <- venn_abers(truth, score)
+package <- predict(calibrator, new_score)
+rbind(by_hand = c(lower = p0, upper = p1), package = unlist(package[1:2]))
+stopifnot(isTRUE(all.equal(c(p0, p1), c(package$lower, package$upper))))
+```
+
+## What the validity guarantee says
+
+A **selector** picks one of the two values. Vovk, Petej and Fedorova (2015,
+Proposition 1) show that there is a selector $S$ for which $p_S$ is perfectly
+calibrated, $E(Y \mid p_S) = p_S$, provided the training observations and the
+new observation are independent and identically distributed. The selector is
+the true label itself, $S = Y$. The proof only needs the calibration
+observations and the new observation to be exchangeable given the proper
+training set. It holds for any scoring model, however poor. A poor model gives
+wide or uninformative pairs, not invalid ones. Venn-Abers predictors are a
+special case of Venn predictors, which share this property (Vovk, Gammerman
+and Shafer, 2022, Chapter 6).
+
+The simulation below repeats the setting above 2000 times with fresh
+calibration sets and new cases. It keeps $p_Y$, the value that the true label
+selects, and compares its average with the observed event frequency in five
+groups of $p_Y$ of equal width. The two columns agree up to the simulation standard error.
+
+```{r validity-simulation}
+set.seed(2)
+repetitions <- 2000
+selected <- outcome <- numeric(repetitions)
+for (r in seq_len(repetitions)) {
+  x <- rnorm(k + 1)
+  y <- runif(k + 1) < plogis(2 * x)
+  s <- plogis(0.5 * x)
+  pair <- predict(venn_abers(y[1:k], s[1:k]), s[k + 1])
+  selected[r] <- if (y[k + 1]) pair$upper else pair$lower
+  outcome[r] <- y[k + 1]
+}
+group <- cut(selected, 0:5 / 5, include.lowest = TRUE)
+mean_p <- tapply(selected, group, mean)
+data.frame(cases = tabulate(group, nlevels(group)),
+           mean_selected = mean_p,
+           event_frequency = tapply(outcome, group, mean),
+           standard_error = sqrt(mean_p * (1 - mean_p) / tabulate(group, nlevels(group))))
+```
+
+The guarantee is narrower than it may look:
+
+- **It needs the true label.** The selector $S = Y$ is unknown when the
+  prediction is made. The guarantee says that the pair always contains a
+  calibrated value, not which one.
+- **The bounds are not a confidence interval.** Nothing guarantees that the
+  true conditional probability lies between `lower` and `upper` with any
+  stated frequency. The distance `upper - lower` shrinks as the calibration
+  set grows, but it has no confidence level.
+- **It is an average.** Calibration holds over repeated calibration sets and
+  new cases, not conditionally on one particular case or subgroup.
+- **It needs the data roles.** The guarantee fails if the scoring model saw
+  calibration observations during training, preprocessing or tuning, if the
+  new cases come from a different distribution, or if observations are
+  dependent, as in many time series.
+- **It does not promise accuracy.** Calibration does not make the model rank
+  cases better, and a calibrated probability can still be close to the base
+  rate.
+
+## One probability from two
+
+Most applications need one probability. Vovk, Petej and Fedorova (2015,
+Section 4) choose the value that minimizes the worst-case extra loss relative
+to the correct member of the pair. For log loss this gives
+$$p = \frac{p_1}{1 - p_0 + p_1},$$
+and for the Brier loss
+$$p = p_1 + \frac{p_0^2 - p_1^2}{2}.$$
+Both lie between $p_0$ and $p_1$. `predict()` returns them as `probability`
+with `loss = "log"` (the default) or `loss = "brier"`, from the same fit.
+
+**Merging loses the formal guarantee.** A merged probability is not covered by
+Proposition 1; its benefit is empirical (Vovk, Petej and Fedorova, 2015,
+abstract and Section 6). Unlike plain isotonic calibration, it never reaches 0
+or 1. With log loss it stays within $[1/(k_0 + 2), 1 - 1/(k_1 + 2)]$, where
+$k_0$ and $k_1$ count the calibration non-events and events (Lemma 2), even
+for a new score below all calibration scores:
+
+```{r merge}
+merged <- c(log = p1 / (1 - p0 + p1), brier = p1 + (p0^2 - p1^2) / 2)
+package <- c(log = predict(calibrator, new_score)$probability,
+             brier = predict(calibrator, new_score, loss = "brier")$probability)
+rbind(by_hand = merged, package = package)
+stopifnot(isTRUE(all.equal(merged, package)))
+
+predict(calibrator, min(score) / 2)
+```
+
+## Cross Venn-Abers
+
+An IVAP uses only part of the data for training and only part for
+calibration. A **Cross Venn-Abers predictor** (CVAP; Vovk, Petej and
+Fedorova, 2015, Section 3) uses all of it. It splits the training data into
+$K$ folds. For each fold $j$, a model trained on the other folds scores the
+fold, and an IVAP calibrated on the fold gives a pair $(p_0^j, p_1^j)$ for the
+new case. The new case is scored by each of the $K$ fold models. The minimax
+merger of the $K$ pairs under log loss uses geometric means:
+$$p = \frac{\mathrm{GM}(p_1)}{\mathrm{GM}(1 - p_0) + \mathrm{GM}(p_1)}.$$
+Under the Brier loss it is the arithmetic mean of the fold-wise Brier
+probabilities,
+$\frac{1}{K} \sum_j \left(p_1^j + \frac{(p_0^j)^2 - (p_1^j)^2}{2}\right)$.
+
+In `cross_venn_abers()` you supply the fold assignment and each calibration
+row's score from its own fold model. At prediction time you supply one column
+of new scores per fold model, named by fold. The chunk below trains the fold
+models, then rebuilds both mergers from the fold-wise calibrators.
+
+```{r cvap-by-hand}
+set.seed(15)
+data <- data.frame(x = rnorm(150))
+data$truth <- runif(150) < plogis(data$x^3)
+fold <- rep(1:3, length.out = 150)
+new_x <- data.frame(x = c(-1, 0.2, 1.5))
+
+cal_score <- numeric(nrow(data))
+new_score <- matrix(NA_real_, nrow(new_x), 3, dimnames = list(NULL, 1:3))
+for (j in 1:3) {
+  model <- glm(truth ~ x, data = data[fold != j, ], family = binomial())
+  cal_score[fold == j] <- predict(model, data[fold == j, ], type = "response")
+  new_score[, j] <- predict(model, new_x, type = "response")
+}
+cross <- cross_venn_abers(data$truth, cal_score, fold)
+
+pairs <- lapply(1:3, function(j) {
+  predict(venn_abers(data$truth[fold == j], cal_score[fold == j]),
+          new_score[, j])
+})
+lower <- sapply(pairs, `[[`, "lower")
+upper <- sapply(pairs, `[[`, "upper")
+gm <- function(p) exp(rowMeans(log(p)))
+by_hand <- cbind(log = gm(upper) / (gm(1 - lower) + gm(upper)),
+                 brier = rowMeans(upper + (lower^2 - upper^2) / 2))
+package <- cbind(log = predict(cross, new_score)$probability,
+                 brier = predict(cross, new_score, loss = "brier")$probability)
+by_hand
+stopifnot(isTRUE(all.equal(by_hand, package)))
+```
+
+`predict(cross, new_score, type = "details")` returns the fold pairs used
+here. A CVAP has no formal validity guarantee. Its authors report that
+calibration appears to be inherited in experiments (Vovk, Petej and Fedorova,
+2015, Section 1). Each fold model must be the model that scored its fold, so a
+single model refitted on all data cannot replace them.
+
+## Multiclass calibration
+
+For $K > 2$ classes the package reduces the problem to binary Venn-Abers
+calibrations. It expects a matrix of uncalibrated class probabilities with one
+column per class.
+
+**One-vs-one** (`method = "ovo"`, the default) follows Manokhin (2017). For
+each pair of classes $(i, j)$ it keeps the calibration rows of these two
+classes. The pair score is $p_j / (p_i + p_j)$, or 0.5 when both are zero. It
+calibrates the event "class $j$" against "class $i$" on these rows. The
+calibrated pairwise probabilities $r_{ji}$ and $r_{ij} = 1 - r_{ji}$ of a new
+case are coupled by the method of Price et al. (1995):
+$$q_i = \frac{1}{\sum_{j \ne i} 1 / r_{ij} - (K - 2)},$$
+and normalized to sum to one. The merged pairwise probabilities follow `loss`,
+as in the binary case.
+
+**One-vs-rest** (`method = "ovr"`) calibrates each class against all others on
+every calibration row, using that class's column as the score. It then divides
+the merged class probabilities by their sum. This reduction is not taken from
+Manokhin (2017).
+
+The chunk below calibrates one pair by hand, then rebuilds the coupled class
+probabilities from the pair results.
+
+```{r multiclass-by-hand}
+set.seed(3)
+classes <- c("a", "b", "c")
+softmax <- function(z) exp(z) / rowSums(exp(z))
+x <- rnorm(300)
+truth <- factor(classes[apply(softmax(cbind(2 * x, -2 * x, 0)), 1,
+                             function(p) sample(3, 1, prob = p))],
+                levels = classes)
+p <- softmax(cbind(a = x, b = -x, c = 0))
+new_p <- softmax(cbind(a = c(-1, 0, 1), b = c(1, 0, -1), c = 0))
+
+ovo <- venn_abers(truth, p)
+pairs <- predict(ovo, new_p, type = "details")$pairs
+
+rows <- truth %in% c("a", "b")
+ab <- venn_abers(truth[rows] == "b", p[rows, "b"] / rowSums(p[rows, c("a", "b")]))
+ab_new <- predict(ab, new_p[, "b"] / rowSums(new_p[, c("a", "b")]))
+stopifnot(isTRUE(all.equal(ab_new$probability,
+                           pairs$probability[pairs$non_event == "a" &
+                                               pairs$event == "b"])))
+
+r <- function(i, j) {
+  forward <- pairs$non_event == j & pairs$event == i
+  if (any(forward)) pairs$probability[forward] else
+    1 - pairs$probability[pairs$non_event == i & pairs$event == j]
+}
+q <- sapply(classes, function(i) {
+  1 / (Reduce(`+`, lapply(setdiff(classes, i), function(j) 1 / r(i, j))) -
+         (length(classes) - 2))
+})
+coupled <- q / rowSums(q)
+coupled
+stopifnot(isTRUE(all.equal(coupled, predict(ovo, new_p),
+                           check.attributes = FALSE)))
+```
+
+Each binary subproblem is an IVAP or CVAP. For one-vs-one, its guarantee
+covers only new cases from one of the pair's two classes. No validity
+guarantee is claimed for the coupled or normalized class probabilities;
+Manokhin (2017) reports their accuracy empirically.
+
+## Regression
+
+`venn_abers_regression()` implements the unbounded Inductive Venn-Abers
+regressor (IVAR) of Petej and Vovk (2026, Sections 3.2 and 4). The model's
+real-valued predictions play the role of scores. Isotonic regression on the
+outcomes is again fitted twice with the new case included. Real outcomes have
+no natural lower and upper label to insert, so the calibration outcomes are
+moderated first. Let $y_{(1)} \le \cdots \le y_{(k)}$ be the sorted calibration
+outcomes and $1 \le m \le \lfloor (k - 1) / 2 \rfloor$, with $a = y_{(m)}$ and
+$b = y_{(k-m+1)}$:
+
+- For the **lower** fit, outcomes below $a$ become $a$, outcomes above
+  $y_{(k-m)}$ become $y_{(k-m)}$, and the new case is inserted with outcome
+  $a$. Its fitted value is the lower bound $L$.
+- For the **upper** fit, outcomes below $y_{(m+1)}$ become $y_{(m+1)}$,
+  outcomes above $b$ become $b$, and the new case is inserted with outcome
+  $b$. Its fitted value is the upper bound $U$.
+
+Extreme outcomes are replaced, never dropped. Instead of `m` you can give a
+level `epsilon`; the package then uses $m = \lfloor \epsilon (k + 1) / 2
+\rfloor$, and the fit stores the effective level $2m / (k + 1)$.
+
+Petej and Vovk (2026, Theorem 4) show for i.i.d. observations and $2m < k$
+that the winsorized outcome $Y'$ (the outcome clipped to $[a, b]$) equals $Y$
+with probability at least $1 - 2m / (k + 1)$. They also show that a selector
+within $[L, U]$ is auto-calibrated for $Y'$: $E(Y' \mid S) = S$. As in the
+binary case, the selector depends on the unknown outcome. The bounds concern a
+regularized conditional expectation. They are **not a prediction interval**:
+nothing says that a future outcome falls between `lower` and `upper` with
+probability $1 - \epsilon$.
+
+The point prediction merges the bounds with weights $w_L = L - a$ and
+$w_U = b - U$:
+$$\hat y = \frac{w_L L + w_U U}{w_L + w_U},$$
+the approximate minimax merger of Petej and Vovk (2026, formula 6). If both
+weights are zero, the package uses the midpoint $(L + U) / 2$. The merged point
+has no validity guarantee of its own.
+
+```{r ivar-by-hand}
+set.seed(4)
+k <- 25
+prediction <- rnorm(k)
+outcome <- 1.5 * prediction + rnorm(k)
+new_prediction <- 0.4
+
+m <- 1
+sorted <- sort(outcome)
+a <- sorted[m]
+b <- sorted[k - m + 1]
+lower_outcome <- pmin(pmax(outcome, a), sorted[k - m])
+upper_outcome <- pmin(pmax(outcome, sorted[m + 1]), b)
+L <- isotonic_at_new(prediction, lower_outcome, new_prediction, a)
+U <- isotonic_at_new(prediction, upper_outcome, new_prediction, b)
+point <- ((L - a) * L + (b - U) * U) / ((L - a) + (b - U))
+
+by_hand <- c(prediction = point, lower = L, upper = U)
+package <- unlist(predict(venn_abers_regression(outcome, prediction, m = m),
+                          new_prediction))
+rbind(by_hand, package)
+stopifnot(isTRUE(all.equal(by_hand, package)))
+```
+
+`cross_venn_abers_regression()` is the Cross Venn-Abers regressor (CVAR). For
+each fold it computes the IVAR point and both bounds from that fold's model,
+with the moderation applied within the fold. It then averages the points, the lower
+bounds and the upper bounds separately, with equal weight per fold. Petej and
+Vovk (2026) state that cross regressors no longer satisfy formal
+validity properties; the averaged bounds are a summary of the fold bounds.
+
+## In practice
+
+The guarantees above are statements about a procedure, not about a data frame.
+`vennabers` checks the shape of its inputs, but it cannot check where the
+predictions came from. You are responsible for:
+
+- training, preprocessing and tuning each model without its calibration rows;
+- scoring new cases with the same model, or for Cross with each fold model;
+- keeping final assessment data outside training, selection and calibration.
+
+The tidymodels workflows in `vignette("workflows", package = "vennabers")`
+create these data roles for you. `vignette("diagnostics", package =
+"vennabers")` shows how to assess calibration on held-out data, where a
+property such as $E(Y \mid P) = P$ can actually be examined.
+
+## References
+
+Manokhin, V. (2017). Multi-class probabilistic classification using inductive
+and cross Venn-Abers predictors. *Proceedings of the Sixth Workshop on
+Conformal and Probabilistic Prediction and Applications*, PMLR 60, 228–240.
+<https://proceedings.mlr.press/v60/manokhin17a.html>
+
+Petej, I. and Vovk, V. (2026). Inductive Venn-Abers and related regressors.
+*arXiv preprint* 2605.06646. <doi:10.48550/arXiv.2605.06646>
+
+Platt, J. C. (2000). Probabilities for SV machines. In A. J. Smola,
+P. L. Bartlett, B. Schölkopf and D. Schuurmans (Eds.), *Advances in Large
+Margin Classifiers*, 61–74. MIT Press.
+
+Price, D., Knerr, S., Personnaz, L. and Dreyfus, G. (1995). Pairwise neural
+network classifiers with probabilistic outputs. *Advances in Neural
+Information Processing Systems 7*, 1109–1116. MIT Press.
+
+Vovk, V., Gammerman, A. and Shafer, G. (2022). *Algorithmic Learning in a
+Random World* (2nd ed.). Springer. <doi:10.1007/978-3-031-06649-8>
+
+Vovk, V. and Petej, I. (2014). Venn-Abers predictors. *Proceedings of the
+Thirtieth Conference on Uncertainty in Artificial Intelligence*, 829–838.
+<doi:10.48550/arXiv.1211.0025>
+
+Vovk, V., Petej, I. and Fedorova, V. (2015). Large-scale probabilistic
+predictors with and without guarantees of validity. *Advances in Neural
+Information Processing Systems 28*, 892–900. <doi:10.48550/arXiv.1511.00213>
+
+Zadrozny, B. and Elkan, C. (2002). Transforming classifier scores into
+accurate multiclass probability estimates. *Proceedings of the Eighth ACM
+SIGKDD International Conference on Knowledge Discovery and Data Mining*,
+694–699. <doi:10.1145/775047.775151>

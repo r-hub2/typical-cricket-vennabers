@@ -1,0 +1,8 @@
+{
+  "sklearn": "1.7.2",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "source": "https://github.com/scikit-learn/scikit-learn/blob/1.7.2/sklearn/calibration.py",
+  "generator": "tests/testthat/extdata/generate-sigmoid-reference.py",
+  "absolute_tolerance": 1e-07
+}

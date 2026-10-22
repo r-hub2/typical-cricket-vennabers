@@ -1,0 +1,158 @@
+---
+title: "Example scripts: training and frozen workflows"
+description: "Training, own fit/predict functions, fixed engine options, encoding, reference splits, independent Inductive sizes, full-model transfer, pairwise OvO and frozen adoption."
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Example scripts: training and frozen workflows}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Train complete tidymodels workflows, preserve names with explicit schemas, or
+calibrate already fitted workflows. Install the optional workflow dependencies
+listed in `DESCRIPTION`; individual examples also identify their engine and
+assessment dependencies.
+
+Start with `vignette("workflows", package = "vennabers")` for the
+step-by-step guide. `?vennabers_examples` indexes all four example collections.
+
+## Choose an example
+
+- [Training binary and shared multiclass workflows](#calibrated-workflow)
+- [Encoding binary names](#encoded-binary)
+- [Encoding multiclass and regression names](#encoded-multiclass-regression)
+- [Reference-style data roles](#reference-splits)
+- [Independent Inductive training and calibration sizes](#inductive-sizes)
+- [Own fit and predict functions](#model-adapter)
+- [Fixed engine options and internal validation](#engine-options)
+- [Binary full-model transfer](#full-model-workflow)
+- [Shared multiclass full-model transfer](#full-multiclass-workflow)
+- [Regression full-model transfer](#full-regression-workflow)
+- [Pairwise Inductive OvO training](#pairwise-inductive)
+- [Pairwise Cross OvO training](#pairwise-cross)
+- [Calibrating a frozen binary workflow](#frozen-binary)
+- [Calibrating frozen multiclass and regression workflows](#frozen-multiclass-regression)
+- [Keeping the original schema for frozen adoption](#frozen-schema)
+
+## Running an example
+
+Each heading below names an installed script. To inspect and run one:
+
+```{r run-example, eval=FALSE, purl=FALSE}
+script <- system.file("examples", "calibrated-workflow.R", package = "vennabers")
+file.show(script)
+source(script)
+```
+
+Replace the filename to run another script. The listings below show the complete
+code without executing it during documentation builds. Sourcing a script runs
+its fits and checks; resampling, tuning and composition matrices can take longer
+than the introductory guides.
+
+## Training binary and shared multiclass workflows {#calibrated-workflow}
+
+`calibrated-workflow.R`: Retain local preprocessing, models and calibration together, then inspect predictions and learning diagnostics.
+
+```{r calibrated-workflow, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "calibrated-workflow.R", package = "vennabers"))}
+```
+
+## Encoding binary names {#encoded-binary}
+
+`encoded-binary.R`: Preserve reserved predictor and class names through encoding, native resampling and decoded predictions.
+
+```{r encoded-binary, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "encoded-binary.R", package = "vennabers"))}
+```
+
+## Encoding multiclass and regression names {#encoded-multiclass-regression}
+
+`encoded-multiclass-regression.R`: Use explicit schemas for shared OvO/OvR and regression with Inductive/Cross calibration and native evaluation.
+
+```{r encoded-multiclass-regression, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "encoded-multiclass-regression.R", package = "vennabers"))}
+```
+
+## Reference-style data roles {#reference-splits}
+
+`reference-splits.R`: Illustrate ordered holdouts and explicit fold complements on synthetic data, without claiming paper benchmark reproduction.
+
+```{r reference-splits, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "reference-splits.R", package = "vennabers"))}
+```
+
+## Independent Inductive training and calibration sizes {#inductive-sizes}
+
+`inductive-sizes.R`: Request 50 training and 20 calibration rows out of 100, leaving 30 unassigned rows that only a full-model refit learns from, then resolve the same sizes on every class pair of a pairwise multiclass fit.
+
+```{r inductive-sizes, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "inductive-sizes.R", package = "vennabers"))}
+```
+
+## Own fit and predict functions {#model-adapter}
+
+`model-adapter.R`: Wrap GLM, multinomial and linear regression fit/predict functions with `model_adapter()`, calibrate them like native engines and keep their settings bound for saved fits. The GLM callback also carries pairwise OvO, Sigmoid postprocessing and a grid search over a recipe degree and the VA loss.
+
+```{r model-adapter, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "model-adapter.R", package = "vennabers"))}
+```
+
+## Fixed engine options and internal validation {#engine-options}
+
+`engine-options.R`: Set fixed rpart options with `parsnip::set_engine()`, check that the full-model refit carries them, see extra fit arguments rejected, and read the not-run XGBoost early-stopping call.
+
+```{r engine-options, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "engine-options.R", package = "vennabers"))}
+```
+
+## Binary full-model transfer {#full-model-workflow}
+
+`full-model-workflow.R`: Compare matched and full prediction models while retaining the same held-out calibration state.
+
+```{r full-model-workflow, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "full-model-workflow.R", package = "vennabers"))}
+```
+
+## Shared multiclass full-model transfer {#full-multiclass-workflow}
+
+`full-multiclass-workflow.R`: Use an additional full shared model with held-out OvO/OvR calibrators and inspect the retained state.
+
+```{r full-multiclass-workflow, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "full-multiclass-workflow.R", package = "vennabers"))}
+```
+
+## Regression full-model transfer {#full-regression-workflow}
+
+`full-regression-workflow.R`: Compare matched and full IVAR/CVAR workflows at fixed settings.
+
+```{r full-regression-workflow, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "full-regression-workflow.R", package = "vennabers"))}
+```
+
+## Pairwise Inductive OvO training {#pairwise-inductive}
+
+`pairwise-inductive.R`: Train a separate binary workflow for each class pair with matching Inductive calibration.
+
+```{r pairwise-inductive, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "pairwise-inductive.R", package = "vennabers"))}
+```
+
+## Pairwise Cross OvO training {#pairwise-cross}
+
+`pairwise-cross.R`: Retain the matching binary workflows and calibrators for every class pair and calibration fold.
+
+```{r pairwise-cross, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "pairwise-cross.R", package = "vennabers"))}
+```
+
+## Calibrating a frozen binary workflow {#frozen-binary}
+
+`frozen-binary.R`: Adopt a previously fitted recipe, model and postprocessor unchanged; compare losses on separate validation rows.
+
+```{r frozen-binary, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "frozen-binary.R", package = "vennabers"))}
+```
+
+## Calibrating frozen multiclass and regression workflows {#frozen-multiclass-regression}
+
+`frozen-multiclass-regression.R`: Separate earlier training and postprocessing from new VA calibration and independent assessment.
+
+```{r frozen-multiclass-regression, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "frozen-multiclass-regression.R", package = "vennabers"))}
+```
+
+## Keeping the original schema for frozen adoption {#frozen-schema}
+
+`frozen-schema.R`: Encode new calibration and assessment data using the schema retained before the original workflow training.
+
+```{r frozen-schema, eval=FALSE, purl=FALSE, code=readLines(system.file("examples", "frozen-schema.R", package = "vennabers"))}
+```

@@ -1,0 +1,78 @@
+year <- if (!is.null(meta$`Date/Publication`)) {
+  substr(meta$`Date/Publication`, 1L, 4L)
+} else if (!is.null(meta$Packaged)) {
+  substr(meta$Packaged, 1L, 4L)
+} else {
+  format(Sys.Date(), "%Y")
+}
+
+bibentry(
+  bibtype = "Manual",
+  key = "vennabers",
+  header = "To cite the vennabers package in publications use:",
+  title = "{vennabers}: Venn-Abers Classification and Regression Calibration",
+  author = person("René-M.", "Kruse",
+                  comment = c(ORCID = "0000-0003-1655-9776")),
+  year = year,
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/RMKruse/vennabers"
+)
+
+bibentry(
+  bibtype = "InProceedings",
+  key = "VovkPetej2014",
+  header = "Please also cite the methods you use. Venn-Abers predictors:",
+  title = "Venn-Abers Predictors",
+  author = c(person("Vladimir", "Vovk"), person("Ivan", "Petej")),
+  booktitle = paste("Proceedings of the Thirtieth Conference on",
+                    "Uncertainty in Artificial Intelligence (UAI 2014)"),
+  pages = "829--838",
+  year = "2014",
+  publisher = "AUAI Press",
+  doi = "10.48550/arXiv.1211.0025"
+)
+
+bibentry(
+  bibtype = "InProceedings",
+  key = "VovkPetejFedorova2015",
+  header = "Inductive and Cross Venn-Abers predictors:",
+  title = "Large-Scale Probabilistic Predictors with and without Guarantees of Validity",
+  author = c(person("Vladimir", "Vovk"), person("Ivan", "Petej"),
+             person("Valentina", "Fedorova")),
+  booktitle = "Advances in Neural Information Processing Systems 28",
+  pages = "892--900",
+  year = "2015",
+  doi = "10.48550/arXiv.1511.00213"
+)
+
+bibentry(
+  bibtype = "InProceedings",
+  key = "Manokhin2017",
+  header = "Multiclass one-vs-one coupling:",
+  title = paste("Multi-Class Probabilistic Classification Using Inductive",
+                "and Cross Venn-Abers Predictors"),
+  author = person("Valery", "Manokhin"),
+  booktitle = paste("Proceedings of the Sixth Workshop on Conformal and",
+                    "Probabilistic Prediction and Applications"),
+  series = "Proceedings of Machine Learning Research",
+  volume = "60",
+  pages = "228--240",
+  year = "2017",
+  publisher = "PMLR",
+  url = "https://proceedings.mlr.press/v60/manokhin17a.html"
+)
+
+bibentry(
+  bibtype = "Article",
+  key = "DimitriadisGneitingJordan2021",
+  header = "CORP reliability diagrams:",
+  title = "Stable Reliability Diagrams for Probabilistic Classifiers",
+  author = c(person("Timo", "Dimitriadis"), person("Tilmann", "Gneiting"),
+             person("Alexander I.", "Jordan")),
+  journal = "Proceedings of the National Academy of Sciences",
+  volume = "118",
+  number = "8",
+  pages = "e2016191118",
+  year = "2021",
+  doi = "10.1073/pnas.2016191118"
+)

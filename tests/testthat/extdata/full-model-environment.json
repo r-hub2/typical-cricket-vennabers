@@ -1,0 +1,10 @@
+{
+  "commit": "0e7b4bc575ce230134576ba1c76688d46bf99ac7",
+  "module_sha256": "ea7816e8832eef3f0fa129d2bb80dffae4efcb785f37f083fc087136edb720a5",
+  "python": "3.14.6",
+  "numpy": "2.5.3",
+  "reference": "VennAbersCV.predict_proba(cv_ensemble=False), fixed table model",
+  "generator_sha256": "720a770a159b6aa841415d79ee568c2ef05d04da9c64f4cd250a1429061cd902",
+  "fixture_sha256": "a11ae5eba4276c1f82d7490c070abab72048c14631f77ff67e5d3cc64f518cd3",
+  "rows": 224
+}

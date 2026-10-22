@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Example scripts: manual calibration</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Example scripts: manual calibration</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#choose-an-example" id="toc-choose-an-example">Choose an
+example</a></li>
+<li><a href="#running-an-example" id="toc-running-an-example">Running an
+example</a></li>
+<li><a href="#binary-options" id="toc-binary-options">Binary precision,
+loss and event selection</a></li>
+<li><a href="#cross-venn-abers" id="toc-cross-venn-abers">Binary Cross
+calibration with retained models</a></li>
+<li><a href="#inductive-ovo" id="toc-inductive-ovo">Inductive multiclass
+one-vs-one</a></li>
+<li><a href="#inductive-ovr" id="toc-inductive-ovr">Inductive multiclass
+one-vs-rest</a></li>
+<li><a href="#cross-multiclass" id="toc-cross-multiclass">Cross
+multiclass calibration</a></li>
+<li><a href="#one-hot-classes" id="toc-one-hot-classes">One-hot class
+decisions</a></li>
+<li><a href="#inductive-regression" id="toc-inductive-regression">Inductive regression</a></li>
+<li><a href="#cross-regression" id="toc-cross-regression">Cross
+regression</a></li>
+<li><a href="#calibration-graphics" id="toc-calibration-graphics">Fit
+diagnoses and assessment graphics</a></li>
+</ul>
+</div>
+
+<p>Calibrate supplied predictions with binary or multiclass
+Inductive/Cross methods, or moderated regression, and draw their fit
+diagnoses and assessment graphics. These examples use base R and the
+installed package.</p>
+<p>Start with
+<code>vignette(&quot;manual-calibration&quot;, package = &quot;vennabers&quot;)</code> for
+the step-by-step guide and
+<code>vignette(&quot;diagnostics&quot;, package = &quot;vennabers&quot;)</code> for the
+graphics. <code>?vennabers_examples</code> indexes all four example
+collections.</p>
+<div id="choose-an-example" class="section level2">
+<h2>Choose an example</h2>
+<ul>
+<li><a href="#binary-options">Binary precision, loss and event
+selection</a></li>
+<li><a href="#cross-venn-abers">Binary Cross calibration with retained
+models</a></li>
+<li><a href="#inductive-ovo">Inductive multiclass one-vs-one</a></li>
+<li><a href="#inductive-ovr">Inductive multiclass one-vs-rest</a></li>
+<li><a href="#cross-multiclass">Cross multiclass calibration</a></li>
+<li><a href="#one-hot-classes">One-hot class decisions</a></li>
+<li><a href="#inductive-regression">Inductive regression</a></li>
+<li><a href="#cross-regression">Cross regression</a></li>
+<li><a href="#calibration-graphics">Fit diagnoses and assessment
+graphics</a></li>
+</ul>
+</div>
+<div id="running-an-example" class="section level2">
+<h2>Running an example</h2>
+<p>Each heading below names an installed script. To inspect and run
+one:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>script <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;binary-options.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">file.show</span>(script)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">source</span>(script)</span></code></pre></div>
+<p>Replace the filename to run another script. The listings below show
+the complete code without executing it during documentation builds.
+Sourcing a script runs its fits and checks; resampling, tuning and
+composition matrices can take longer than the introductory guides.</p>
+</div>
+<div id="binary-options" class="section level2">
+<h2>Binary precision, loss and event selection</h2>
+<p><code>binary-options.R</code>: Compare Log/Brier regularization,
+calibration rounding, class predictions and Cross fold diagnostics.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># After installation: source(system.file(&quot;examples&quot;, &quot;binary-options.R&quot;, package = &quot;vennabers&quot;))</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># Precomputed probabilities from a fixed model on its separate calibration set.</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># No calibration or test truths were used to train that model or preprocessing.</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>calibration_probability <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">501</span>, .<span class="dv">502</span>, .<span class="dv">509</span>, .<span class="dv">510</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>new_probability <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">499</span>, .<span class="dv">505</span>, .<span class="dv">511</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>inductive <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth, calibration_probability, <span class="at">precision =</span> <span class="dv">2</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="cf">for</span> (loss <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)) {</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(inductive, new_probability, <span class="at">loss =</span> loss)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  classes <span class="ot">&lt;-</span> <span class="fu">predict</span>(inductive, new_probability, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(classes, prediction<span class="sc">$</span>probability <span class="sc">&gt;=</span> .<span class="dv">5</span>))</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>  <span class="fu">print</span>(prediction)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>}</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co"># Precision affects calibration only; choosing a new precision requires a fit.</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co"># The new values above are deliberately not rounded to two decimal places.</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co"># To select class 0 as the event, reverse truth AND the supplied probabilities.</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co"># Round only after selecting the event; rounded results need not be complements.</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>other_event <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth <span class="sc">==</span> <span class="dv">0</span>, <span class="dv">1</span> <span class="sc">-</span> calibration_probability, <span class="at">precision =</span> <span class="dv">2</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">predict</span>(other_event, <span class="dv">1</span> <span class="sc">-</span> new_probability))</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co"># Inductive bounds are VA endpoints, not confidence intervals.</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co"># Cross uses held-out probabilities from each corresponding retained fold model.</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co"># These illustrative folds have unequal sizes; each still receives equal weight.</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co"># See cross-venn-abers.R for complete model fitting and held-out data generation.</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>cross <span class="ot">&lt;-</span> <span class="fu">cross_venn_abers</span>(</span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>  <span class="at">truth =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>), <span class="at">probability =</span> <span class="fu">c</span>(.<span class="dv">501</span>, .<span class="dv">201</span>, .<span class="dv">501</span>, .<span class="dv">801</span>),</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>  <span class="at">fold =</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;B&quot;</span>), <span class="at">precision =</span> <span class="dv">2</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>)</span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="co"># Each column comes from the model that excluded its named calibration fold.</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co"># All columns refer to the same new observations, in the same order.</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>new_probability <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">B =</span> <span class="fu">c</span>(.<span class="dv">201</span>, .<span class="dv">501</span>, .<span class="dv">901</span>), <span class="at">A =</span> <span class="fu">c</span>(.<span class="dv">199</span>, .<span class="dv">501</span>, .<span class="dv">801</span>))</span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>test_truth <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>)  <span class="co"># Used only for assessment, after fitting.</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a>  plot_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a>  <span class="fu">on.exit</span>(<span class="fu">unlink</span>(plot_file), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a>  grDevices<span class="sc">::</span><span class="fu">pdf</span>(plot_file)</span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a>  <span class="fu">on.exit</span>(grDevices<span class="sc">::</span><span class="fu">dev.off</span>(), <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">after =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a>  <span class="cf">for</span> (loss <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)) {</span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a>    details <span class="ot">&lt;-</span> <span class="fu">predict</span>(cross, new_probability, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;details&quot;</span>)</span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a>    reconstructed <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(new_probability)), <span class="cf">function</span>(row) {</span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a>      f <span class="ot">&lt;-</span> details<span class="sc">$</span>folds[details<span class="sc">$</span>folds<span class="sc">$</span>row <span class="sc">==</span> row, ]</span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a>      <span class="cf">if</span> (loss <span class="sc">==</span> <span class="st">&quot;log&quot;</span>) {</span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a>        <span class="fu">plogis</span>(<span class="fu">mean</span>(<span class="fu">log</span>(f<span class="sc">$</span>upper)) <span class="sc">-</span> <span class="fu">mean</span>(<span class="fu">log1p</span>(<span class="sc">-</span>f<span class="sc">$</span>lower)))</span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a>      } <span class="cf">else</span> <span class="fu">mean</span>(f<span class="sc">$</span>probability)</span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a>    }, <span class="dv">0</span>)</span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">max</span>(<span class="fu">abs</span>(reconstructed <span class="sc">-</span> details<span class="sc">$</span>prediction<span class="sc">$</span>probability)) <span class="sc">&lt;</span> <span class="fl">1e-10</span>,</span>
+<span id="cb2-51"><a href="#cb2-51" tabindex="-1"></a>              <span class="fu">identical</span>(<span class="fu">predict</span>(cross, new_probability, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>),</span>
+<span id="cb2-52"><a href="#cb2-52" tabindex="-1"></a>                        details<span class="sc">$</span>prediction<span class="sc">$</span>probability <span class="sc">&gt;=</span> .<span class="dv">5</span>))</span>
+<span id="cb2-53"><a href="#cb2-53" tabindex="-1"></a>    <span class="fu">print</span>(details)</span>
+<span id="cb2-54"><a href="#cb2-54" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">brier =</span> <span class="fu">brier_score</span>(test_truth, reconstructed),</span>
+<span id="cb2-55"><a href="#cb2-55" tabindex="-1"></a>            <span class="at">log =</span> <span class="fu">log_loss</span>(test_truth, reconstructed)))</span>
+<span id="cb2-56"><a href="#cb2-56" tabindex="-1"></a>    <span class="fu">calibration_plot</span>(test_truth, reconstructed)</span>
+<span id="cb2-57"><a href="#cb2-57" tabindex="-1"></a>  }</span>
+<span id="cb2-58"><a href="#cb2-58" tabindex="-1"></a>})</span>
+<span id="cb2-59"><a href="#cb2-59" tabindex="-1"></a><span class="co"># Classes use the combined probability with TRUE at .5, never a fold vote.</span></span>
+<span id="cb2-60"><a href="#cb2-60" tabindex="-1"></a><span class="co"># Fold details concern new observations; there is no aggregate Cross interval.</span></span>
+<span id="cb2-61"><a href="#cb2-61" tabindex="-1"></a><span class="co"># No improvement in test scores or perfect Cross calibration is promised.</span></span></code></pre></div>
+</div>
+<div id="cross-venn-abers" class="section level2">
+<h2>Binary Cross calibration with retained models</h2>
+<p><code>cross-venn-abers.R</code>: Fit separate GLMs, retain the
+corresponding fold models and assess calibrated probabilities on
+held-out observations.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Run from the checkout root after installation:</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># Rscript inst/examples/cross-venn-abers.R</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;assertions.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260906</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>observations <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x1 =</span> <span class="fu">rnorm</span>(<span class="dv">900</span><span class="dt">L</span>), <span class="at">x2 =</span> <span class="fu">rnorm</span>(<span class="dv">900</span><span class="dt">L</span>))</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>observations<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="dv">900</span><span class="dt">L</span>, <span class="dv">1</span><span class="dt">L</span>, stats<span class="sc">::</span><span class="fu">plogis</span>(</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="sc">-</span><span class="fl">0.4</span> <span class="sc">+</span> observations<span class="sc">$</span>x1 <span class="sc">-</span> <span class="fl">0.6</span> <span class="sc">*</span> observations<span class="sc">$</span>x2</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>))  <span class="co"># The event is 1 (equivalently TRUE).</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co"># Set aside test observations before any model fitting or calibration.</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>test_rows <span class="ot">&lt;-</span> <span class="fu">sample.int</span>(<span class="fu">nrow</span>(observations), <span class="dv">300</span><span class="dt">L</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>test <span class="ot">&lt;-</span> observations[test_rows, ]</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>development <span class="ot">&lt;-</span> observations[<span class="sc">-</span>test_rows, ]</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>fold_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>fold <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">rep</span>(fold_ids, <span class="at">length.out =</span> <span class="fu">nrow</span>(development)))</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">vector</span>(<span class="st">&quot;list&quot;</span>, <span class="fu">length</span>(fold_ids)), fold_ids)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>out_of_fold_probability <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">nrow</span>(development))</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="cf">for</span> (id <span class="cf">in</span> fold_ids) {</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>  held_out <span class="ot">&lt;-</span> fold <span class="sc">==</span> id</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>  <span class="co"># Exclusion must cover the complete learned pipeline, including any learned</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>  <span class="co"># preprocessing or tuning. This example needs neither.</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>  models[[id]] <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">glm</span>(truth <span class="sc">~</span> x1 <span class="sc">+</span> x2,</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>    <span class="at">data =</span> development[<span class="sc">!</span>held_out, ], <span class="at">family =</span> stats<span class="sc">::</span><span class="fu">binomial</span>()</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>  )</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>  <span class="co"># Restore held-out probabilities to their original development positions.</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>  out_of_fold_probability[held_out] <span class="ot">&lt;-</span> <span class="fu">predict</span>(models[[id]],</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>    <span class="at">newdata =</span> development[held_out, ], <span class="at">type =</span> <span class="st">&quot;response&quot;</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>  )</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>}</span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co"># Retain these models: each predicts the same test rows in the same order.</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co"># A single all-data refit cannot replace them. Names cannot prove model</span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co"># provenance, training exclusion, unique observations, or semantic alignment.</span></span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a>test_probability <span class="ot">&lt;-</span> <span class="fu">vapply</span>(models, <span class="cf">function</span>(model) {</span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a>  <span class="fu">predict</span>(model, <span class="at">newdata =</span> test[<span class="fu">c</span>(<span class="st">&quot;x1&quot;</span>, <span class="st">&quot;x2&quot;</span>)], <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a>}, <span class="fu">numeric</span>(<span class="fu">nrow</span>(test)))</span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="co"># The package owns per-fold calibration and equal-weight log-loss aggregation.</span></span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a><span class="co"># Model fitting and fold creation remain caller responsibilities.</span></span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a>calibrator <span class="ot">&lt;-</span> <span class="fu">cross_venn_abers</span>(</span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a>  development<span class="sc">$</span>truth, out_of_fold_probability, fold</span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a>)</span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(calibrator, test_probability)</span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a><span class="fu">assert_conditions</span>(</span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a>  <span class="fu">is.data.frame</span>(prediction), <span class="fu">nrow</span>(prediction) <span class="sc">==</span> <span class="fu">nrow</span>(test),</span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a>  <span class="fu">identical</span>(<span class="fu">names</span>(prediction), <span class="st">&quot;probability&quot;</span>),</span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a>  <span class="fu">is.double</span>(prediction<span class="sc">$</span>probability), <span class="fu">all</span>(<span class="fu">is.finite</span>(prediction<span class="sc">$</span>probability)),</span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a>  <span class="fu">all</span>(prediction<span class="sc">$</span>probability <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> prediction<span class="sc">$</span>probability <span class="sc">&lt;=</span> <span class="dv">1</span>)</span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a>)</span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a></span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a><span class="co"># Test truth is used only for evaluation. No score improvement is promised.</span></span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a>scores <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a>  <span class="at">brier_score =</span> <span class="fu">brier_score</span>(test<span class="sc">$</span>truth, prediction<span class="sc">$</span>probability),</span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a>  <span class="at">log_loss =</span> <span class="fu">log_loss</span>(test<span class="sc">$</span>truth, prediction<span class="sc">$</span>probability)</span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a>)</span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">is.finite</span>(scores)))</span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a><span class="fu">print</span>(scores)</span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" tabindex="-1"></a><span class="co"># A temporary PDF also works without an interactive display. Close and remove</span></span>
+<span id="cb3-63"><a href="#cb3-63" tabindex="-1"></a><span class="co"># it even on error. For an interactive plot, call calibration_plot() directly.</span></span>
+<span id="cb3-64"><a href="#cb3-64" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb3-65"><a href="#cb3-65" tabindex="-1"></a>  plot_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb3-66"><a href="#cb3-66" tabindex="-1"></a>  <span class="fu">on.exit</span>(<span class="fu">unlink</span>(plot_file), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-67"><a href="#cb3-67" tabindex="-1"></a>  grDevices<span class="sc">::</span><span class="fu">pdf</span>(plot_file)</span>
+<span id="cb3-68"><a href="#cb3-68" tabindex="-1"></a>  <span class="fu">on.exit</span>(grDevices<span class="sc">::</span><span class="fu">dev.off</span>(), <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">after =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-69"><a href="#cb3-69" tabindex="-1"></a>  summary <span class="ot">&lt;-</span> <span class="fu">calibration_plot</span>(test<span class="sc">$</span>truth, prediction<span class="sc">$</span>probability)</span>
+<span id="cb3-70"><a href="#cb3-70" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">sum</span>(summary<span class="sc">$</span>count) <span class="sc">==</span> <span class="fu">nrow</span>(test))</span>
+<span id="cb3-71"><a href="#cb3-71" tabindex="-1"></a>})</span>
+<span id="cb3-72"><a href="#cb3-72" tabindex="-1"></a></span>
+<span id="cb3-73"><a href="#cb3-73" tabindex="-1"></a><span class="co"># Cross output is a regularized event probability, with no public aggregate</span></span>
+<span id="cb3-74"><a href="#cb3-74" tabindex="-1"></a><span class="co"># interval. Individual fold diagnostics are available with type = &quot;details&quot;.</span></span>
+<span id="cb3-75"><a href="#cb3-75" tabindex="-1"></a><span class="co"># The combined probability inherits no IVAP perfect-calibration</span></span>
+<span id="cb3-76"><a href="#cb3-76" tabindex="-1"></a><span class="co"># guarantee and makes no confidence-interval coverage claim.</span></span></code></pre></div>
+</div>
+<div id="inductive-ovo" class="section level2">
+<h2>Inductive multiclass one-vs-one</h2>
+<p><code>inductive-ovo.R</code>: Calibrate fixed class probabilities,
+inspect pair diagnostics and score the coupled class matrix.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># After package installation: Rscript inst/examples/inductive-ovo.R</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># Illustrative caller-supplied outputs from one already fixed multiclass model.</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># Calibration and assessment observations are separate from that model&#39;s</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co"># training, preprocessing, and tuning; the package does not train the model.</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>classes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;dog&quot;</span>, <span class="st">&quot;bird&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(classes, <span class="dv">2</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">2</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">6</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">2</span>, .<span class="dv">7</span>),</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>           <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">3</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">5</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">3</span>, .<span class="dv">5</span>))</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="fu">colnames</span>(p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth, p, <span class="at">precision =</span> <span class="dv">2</span>, <span class="at">method =</span> <span class="st">&quot;ovo&quot;</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="fu">print</span>(fit)</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>new_p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">4</span>, .<span class="dv">5</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">8</span>, .<span class="dv">1</span>))</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="fu">colnames</span>(new_p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;bird&quot;</span>, <span class="st">&quot;dog&quot;</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>  plot_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a>  grDevices<span class="sc">::</span><span class="fu">pdf</span>(plot_file)</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>  <span class="fu">on.exit</span>({ grDevices<span class="sc">::</span><span class="fu">dev.off</span>(); <span class="fu">unlink</span>(plot_file) })</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a>  <span class="cf">for</span> (loss <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)) {</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>    details <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p[, <span class="fu">rev</span>(classes)], <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;details&quot;</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a>    probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss)</span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>    predicted_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>)</span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a>    reconstructed <span class="ot">&lt;-</span> probability</span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>    <span class="cf">for</span> (row <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(new_p))) {</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a>      pairs <span class="ot">&lt;-</span> details<span class="sc">$</span>pairs[details<span class="sc">$</span>pairs<span class="sc">$</span>row <span class="sc">==</span> row, ]</span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a>      <span class="cf">for</span> (class <span class="cf">in</span> classes) {</span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a>        q <span class="ot">&lt;-</span> <span class="fu">c</span>(pairs<span class="sc">$</span>probability[pairs<span class="sc">$</span>event <span class="sc">==</span> class],</span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a>               <span class="dv">1</span> <span class="sc">-</span> pairs<span class="sc">$</span>probability[pairs<span class="sc">$</span>non_event <span class="sc">==</span> class])</span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a>        reconstructed[row, class] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="fu">sum</span>(<span class="dv">1</span> <span class="sc">/</span> q) <span class="sc">-</span> (<span class="fu">length</span>(classes) <span class="sc">-</span> <span class="dv">2</span>))</span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a>      }</span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a>    }</span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a>    reconstructed <span class="ot">&lt;-</span> reconstructed <span class="sc">/</span> <span class="fu">rowSums</span>(reconstructed)</span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">max</span>(<span class="fu">abs</span>(reconstructed <span class="sc">-</span> probability)) <span class="sc">&lt;=</span> <span class="fl">1e-10</span>,</span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a>              <span class="fu">identical</span>(probability, details<span class="sc">$</span>prediction),</span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a>              <span class="fu">identical</span>(predicted_class,</span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a>                        <span class="fu">factor</span>(classes[<span class="fu">max.col</span>(probability, <span class="at">ties.method =</span> <span class="st">&quot;first&quot;</span>)], <span class="at">levels =</span> classes)))</span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a>    <span class="fu">print</span>(details)</span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a>    <span class="fu">print</span>(predicted_class)</span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">brier =</span> <span class="fu">brier_score</span>(assessment, probability), <span class="at">log =</span> <span class="fu">log_loss</span>(assessment, probability)))</span>
+<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a>    groups <span class="ot">&lt;-</span> <span class="fu">calibration_plot</span>(assessment, probability)</span>
+<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">tapply</span>(groups<span class="sc">$</span>count, groups<span class="sc">$</span>class, sum) <span class="sc">==</span> <span class="fu">length</span>(assessment)))</span>
+<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a>    <span class="fu">print</span>(groups)</span>
+<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a>  }</span>
+<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a>})</span>
+<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co"># Pair endpoints have only their binary interpretation. Assessment scores use</span></span>
+<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co"># the final matrix; Brier sums class errors without dividing by class count.</span></span></code></pre></div>
+</div>
+<div id="inductive-ovr" class="section level2">
+<h2>Inductive multiclass one-vs-rest</h2>
+<p><code>inductive-ovr.R</code>: Calibrate each class against the rest
+and assess the final normalized probabilities.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># After package installation: Rscript inst/examples/inductive-ovr.R</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># Illustrative probabilities from an already fixed multiclass model.</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co"># Calibration and assessment are separate from its training and tuning.</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>classes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;dog&quot;</span>, <span class="st">&quot;bird&quot;</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(classes, <span class="dv">2</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">2</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">6</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">2</span>, .<span class="dv">7</span>),</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>           <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">3</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">5</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">3</span>, .<span class="dv">5</span>))</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">colnames</span>(p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth, p, <span class="at">method =</span> <span class="st">&quot;ovr&quot;</span>, <span class="at">precision =</span> <span class="dv">2</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="fu">print</span>(fit)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>new_p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">4</span>, .<span class="dv">5</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">8</span>, .<span class="dv">1</span>))</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">colnames</span>(new_p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;bird&quot;</span>, <span class="st">&quot;dog&quot;</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>  plot_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>  grDevices<span class="sc">::</span><span class="fu">pdf</span>(plot_file)</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>  <span class="fu">on.exit</span>({ grDevices<span class="sc">::</span><span class="fu">dev.off</span>(); <span class="fu">unlink</span>(plot_file) })</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>  <span class="cf">for</span> (loss <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)) {</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>    details <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p[, <span class="fu">rev</span>(classes)], <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;details&quot;</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>    probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss)</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>    predicted_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>    points <span class="ot">&lt;-</span> <span class="fu">vapply</span>(classes, <span class="cf">function</span>(class) {</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>      parts <span class="ot">&lt;-</span> details<span class="sc">$</span>classes[details<span class="sc">$</span>classes<span class="sc">$</span>event <span class="sc">==</span> class, ]</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>      parts<span class="sc">$</span>probability[<span class="fu">match</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(new_p)), parts<span class="sc">$</span>row)]</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a>    }, <span class="fu">numeric</span>(<span class="fu">nrow</span>(new_p)))</span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">max</span>(<span class="fu">abs</span>(points <span class="sc">/</span> <span class="fu">rowSums</span>(points) <span class="sc">-</span> probability)) <span class="sc">&lt;=</span> <span class="fl">1e-10</span>,</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a>              <span class="fu">identical</span>(probability, details<span class="sc">$</span>prediction),</span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a>              <span class="fu">identical</span>(predicted_class,</span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a>                        <span class="fu">factor</span>(classes[<span class="fu">max.col</span>(probability, <span class="at">ties.method =</span> <span class="st">&quot;first&quot;</span>)], <span class="at">levels =</span> classes)))</span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a>    <span class="fu">print</span>(details)</span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a>    <span class="fu">print</span>(predicted_class)</span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">brier =</span> <span class="fu">brier_score</span>(assessment, probability), <span class="at">log =</span> <span class="fu">log_loss</span>(assessment, probability)))</span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a>    groups <span class="ot">&lt;-</span> <span class="fu">calibration_plot</span>(assessment, probability)</span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a>    <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">tapply</span>(groups<span class="sc">$</span>count, groups<span class="sc">$</span>class, sum) <span class="sc">==</span> <span class="fu">length</span>(assessment)))</span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a>    <span class="fu">print</span>(groups)</span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a>  }</span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a>})</span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a><span class="co"># Endpoints concern each binary class-against-rest problem. Scores and plots</span></span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a><span class="co"># use the final normalized matrix. Manual Brier is an R extension over Python.</span></span></code></pre></div>
+</div>
+<div id="cross-multiclass" class="section level2">
+<h2>Cross multiclass calibration</h2>
+<p><code>cross-multiclass.R</code>: Supply fold-matched class matrices
+and reconstruct the OvO/OvR aggregation from binary diagnostics.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># After package installation: Rscript inst/examples/cross-multiclass.R</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Precomputed out-of-fold probabilities from two retained multiclass models.</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># Model A excluded rows 1:2; model B excluded rows 3:6, including preprocessing</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co"># and tuning. Retain both models yourself. No model is trained by this package.</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>classes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;dog&quot;</span>, <span class="st">&quot;bird&quot;</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;dog&quot;</span>, <span class="st">&quot;cat&quot;</span>, <span class="st">&quot;bird&quot;</span>, <span class="st">&quot;dog&quot;</span>, <span class="st">&quot;bird&quot;</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>fold <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;B&quot;</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">2</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">6</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">3</span>, .<span class="dv">2</span>),</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>           <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">2</span>, .<span class="dv">7</span>), <span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">5</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">3</span>, .<span class="dv">5</span>))</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">colnames</span>(p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co"># The same three untouched assessment observations, in the same row order,</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co"># predicted by each corresponding retained model. List order is immaterial.</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>new_p <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">B =</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">4</span>, .<span class="dv">5</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">8</span>, .<span class="dv">1</span>)),</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>              <span class="at">A =</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">4</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">2</span>, .<span class="dv">6</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">7</span>, .<span class="dv">1</span>)))</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>new_p <span class="ot">&lt;-</span> <span class="fu">lapply</span>(new_p, <span class="cf">function</span>(x) { <span class="fu">colnames</span>(x) <span class="ot">&lt;-</span> classes; x })</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;bird&quot;</span>, <span class="st">&quot;dog&quot;</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>  plot_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  grDevices<span class="sc">::</span><span class="fu">pdf</span>(plot_file)</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>  <span class="fu">on.exit</span>({ grDevices<span class="sc">::</span><span class="fu">dev.off</span>(); <span class="fu">unlink</span>(plot_file) })</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>  <span class="cf">for</span> (method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;ovo&quot;</span>, <span class="st">&quot;ovr&quot;</span>)) {</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>    fit <span class="ot">&lt;-</span> <span class="fu">cross_venn_abers</span>(truth, p, fold, <span class="at">method =</span> method, <span class="at">precision =</span> <span class="dv">2</span>)</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>    <span class="fu">print</span>(fit)</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>    <span class="cf">for</span> (loss <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;log&quot;</span>, <span class="st">&quot;brier&quot;</span>)) {</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>      details <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;details&quot;</span>)</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>      probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss)</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>      predicted_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">loss =</span> loss, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>)</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>      <span class="co"># Reconstruct from the fold endpoints/points, then combine subproblems.</span></span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>      parts <span class="ot">&lt;-</span> details[[<span class="dv">2</span><span class="dt">L</span>]]</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>      problems <span class="ot">&lt;-</span> <span class="fu">unique</span>(parts[<span class="fu">c</span>(<span class="cf">if</span> (method <span class="sc">==</span> <span class="st">&quot;ovo&quot;</span>) <span class="st">&quot;non_event&quot;</span>, <span class="st">&quot;event&quot;</span>)])</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a>      merged <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(problems)), <span class="cf">function</span>(i) {</span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>        selected <span class="ot">&lt;-</span> parts<span class="sc">$</span>event <span class="sc">==</span> problems<span class="sc">$</span>event[i]</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>        <span class="cf">if</span> (method <span class="sc">==</span> <span class="st">&quot;ovo&quot;</span>) selected <span class="ot">&lt;-</span> selected <span class="sc">&amp;</span> parts<span class="sc">$</span>non_event <span class="sc">==</span> problems<span class="sc">$</span>non_event[i]</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>        <span class="fu">vapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(probability)), <span class="cf">function</span>(row) {</span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>          f <span class="ot">&lt;-</span> parts[selected <span class="sc">&amp;</span> parts<span class="sc">$</span>row <span class="sc">==</span> row, ]</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a>          <span class="cf">if</span> (loss <span class="sc">==</span> <span class="st">&quot;log&quot;</span>) {</span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a>            <span class="fu">plogis</span>(<span class="fu">mean</span>(<span class="fu">log</span>(f<span class="sc">$</span>upper)) <span class="sc">-</span> <span class="fu">mean</span>(<span class="fu">log1p</span>(<span class="sc">-</span>f<span class="sc">$</span>lower)))</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a>          } <span class="cf">else</span> <span class="fu">mean</span>(f<span class="sc">$</span>probability)</span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a>        }, <span class="dv">0</span>)</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a>      }, <span class="fu">numeric</span>(<span class="fu">nrow</span>(probability)))</span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a>      recovered <span class="ot">&lt;-</span> <span class="cf">if</span> (method <span class="sc">==</span> <span class="st">&quot;ovr&quot;</span>) merged <span class="cf">else</span> <span class="fu">vapply</span>(classes, <span class="cf">function</span>(class) {</span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1"></a>        q <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="dv">1</span> <span class="sc">-</span> merged[, problems<span class="sc">$</span>non_event <span class="sc">==</span> class, <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1"></a>                   merged[, problems<span class="sc">$</span>event <span class="sc">==</span> class, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a>        <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="fu">rowSums</span>((<span class="dv">1</span> <span class="sc">-</span> q) <span class="sc">/</span> q))</span>
+<span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a>      }, <span class="fu">numeric</span>(<span class="fu">nrow</span>(probability)))</span>
+<span id="cb6-49"><a href="#cb6-49" tabindex="-1"></a>      recovered <span class="ot">&lt;-</span> recovered <span class="sc">/</span> <span class="fu">rowSums</span>(recovered)</span>
+<span id="cb6-50"><a href="#cb6-50" tabindex="-1"></a>      <span class="fu">stopifnot</span>(<span class="fu">max</span>(<span class="fu">abs</span>(recovered <span class="sc">-</span> probability)) <span class="sc">&lt;=</span> <span class="fl">1e-10</span>,</span>
+<span id="cb6-51"><a href="#cb6-51" tabindex="-1"></a>                <span class="fu">identical</span>(probability, details<span class="sc">$</span>prediction),</span>
+<span id="cb6-52"><a href="#cb6-52" tabindex="-1"></a>                <span class="fu">identical</span>(predicted_class,</span>
+<span id="cb6-53"><a href="#cb6-53" tabindex="-1"></a>                          <span class="fu">factor</span>(classes[<span class="fu">max.col</span>(probability, <span class="at">ties.method =</span> <span class="st">&quot;first&quot;</span>)],</span>
+<span id="cb6-54"><a href="#cb6-54" tabindex="-1"></a>                                 <span class="at">levels =</span> classes)))</span>
+<span id="cb6-55"><a href="#cb6-55" tabindex="-1"></a>      <span class="fu">print</span>(details)</span>
+<span id="cb6-56"><a href="#cb6-56" tabindex="-1"></a>      <span class="fu">print</span>(predicted_class)</span>
+<span id="cb6-57"><a href="#cb6-57" tabindex="-1"></a>      <span class="fu">print</span>(<span class="fu">c</span>(<span class="at">brier =</span> <span class="fu">brier_score</span>(assessment, probability),</span>
+<span id="cb6-58"><a href="#cb6-58" tabindex="-1"></a>              <span class="at">log =</span> <span class="fu">log_loss</span>(assessment, probability)))</span>
+<span id="cb6-59"><a href="#cb6-59" tabindex="-1"></a>      groups <span class="ot">&lt;-</span> <span class="fu">calibration_plot</span>(assessment, probability, <span class="at">bins =</span> <span class="dv">1</span>)</span>
+<span id="cb6-60"><a href="#cb6-60" tabindex="-1"></a>      <span class="fu">stopifnot</span>(<span class="fu">max</span>(<span class="fu">abs</span>(groups<span class="sc">$</span>mean_probability <span class="sc">-</span> <span class="fu">colMeans</span>(probability))) <span class="sc">&lt;=</span> <span class="fl">1e-10</span>,</span>
+<span id="cb6-61"><a href="#cb6-61" tabindex="-1"></a>                <span class="fu">all</span>(groups<span class="sc">$</span>count <span class="sc">==</span> <span class="fu">length</span>(assessment)), <span class="fu">all</span>(groups<span class="sc">$</span>event_rate <span class="sc">==</span> <span class="dv">1</span> <span class="sc">/</span> <span class="dv">3</span>))</span>
+<span id="cb6-62"><a href="#cb6-62" tabindex="-1"></a>      <span class="fu">print</span>(groups)</span>
+<span id="cb6-63"><a href="#cb6-63" tabindex="-1"></a>    }</span>
+<span id="cb6-64"><a href="#cb6-64" tabindex="-1"></a>  }</span>
+<span id="cb6-65"><a href="#cb6-65" tabindex="-1"></a>})</span>
+<span id="cb6-66"><a href="#cb6-66" tabindex="-1"></a><span class="co"># One shared fold plan serves all pairs/classes. Fold A lacks bird but every</span></span>
+<span id="cb6-67"><a href="#cb6-67" tabindex="-1"></a><span class="co"># OvO pair remains nonempty. Empty pairs fail with the pair and fold identified.</span></span>
+<span id="cb6-68"><a href="#cb6-68" tabindex="-1"></a><span class="co"># Endpoints describe binary subproblems, with no aggregate confidence interval.</span></span>
+<span id="cb6-69"><a href="#cb6-69" tabindex="-1"></a><span class="co"># Manual Cross multiclass is an R extension; Python has no matching public</span></span>
+<span id="cb6-70"><a href="#cb6-70" tabindex="-1"></a><span class="co"># manual whole-procedure API. Numerical tests reconstruct binary components.</span></span></code></pre></div>
+</div>
+<div id="one-hot-classes" class="section level2">
+<h2>One-hot class decisions</h2>
+<p><code>one-hot-classes.R</code>: Represent binary and multiclass class
+decisions as one-hot matrices, including exact ties and missing
+decisions.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># After package installation: Rscript inst/examples/one-hot-classes.R</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co"># One-hot matrices represent class decisions the predictor has already made.</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co"># venn_abers_one_hot() never chooses a class from probabilities itself.</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co"># Binary: the logical class decision is TRUE (the event) at probability &gt;= 0.5,</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># so an exact 0.5 tie sets the TRUE column.</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>binary <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(<span class="fu">c</span>(<span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">FALSE</span>, <span class="cn">TRUE</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">2</span>, .<span class="dv">8</span>, .<span class="dv">8</span>))</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>new_scores <span class="ot">&lt;-</span> <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">5</span>, .<span class="dv">8</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(binary, new_scores)<span class="sc">$</span>probability</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>binary_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(binary, new_scores, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>binary_one_hot <span class="ot">&lt;-</span> <span class="fu">venn_abers_one_hot</span>(binary_class)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">cbind</span>(probability, binary_one_hot))</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="fu">stopifnot</span>(probability[[<span class="dv">2</span><span class="dt">L</span>]] <span class="sc">==</span> .<span class="dv">5</span>,</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>          <span class="fu">identical</span>(<span class="fu">colnames</span>(binary_one_hot), <span class="fu">c</span>(<span class="st">&quot;FALSE&quot;</span>, <span class="st">&quot;TRUE&quot;</span>)),</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>          <span class="fu">identical</span>(binary_one_hot[, <span class="st">&quot;TRUE&quot;</span>], <span class="fu">as.double</span>(binary_class)))</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co"># Multiclass: columns follow the stored factor levels, even for classes that</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co"># no row predicts, and an exact tie keeps the first stored level.</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>classes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;cat&quot;</span>, <span class="st">&quot;dog&quot;</span>, <span class="st">&quot;bird&quot;</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">rep</span>(classes, <span class="dv">2</span>), <span class="at">levels =</span> classes)</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">7</span>, .<span class="dv">2</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">6</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">2</span>, .<span class="dv">7</span>),</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>           <span class="fu">c</span>(.<span class="dv">5</span>, .<span class="dv">3</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">3</span>, .<span class="dv">5</span>, .<span class="dv">2</span>), <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">3</span>, .<span class="dv">5</span>))</span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="fu">colnames</span>(p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth, p, <span class="at">method =</span> <span class="st">&quot;ovo&quot;</span>)</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a>new_p <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">3</span>, .<span class="dv">1</span>), <span class="fu">c</span>(.<span class="dv">1</span>, .<span class="dv">4</span>, .<span class="dv">5</span>), <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>) <span class="sc">/</span> <span class="dv">3</span>)</span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="fu">colnames</span>(new_p) <span class="ot">&lt;-</span> classes</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a>multiclass_class <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, new_p, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>)</span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a>multiclass_one_hot <span class="ot">&lt;-</span> <span class="fu">venn_abers_one_hot</span>(multiclass_class)</span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="fu">print</span>(multiclass_one_hot)</span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co"># The third row is an exact tie, so its one sits in the first level &quot;cat&quot;.</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">length</span>(<span class="fu">unique</span>(<span class="fu">predict</span>(fit, new_p)[<span class="dv">3</span><span class="dt">L</span>, ])) <span class="sc">==</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a>          <span class="fu">identical</span>(multiclass_one_hot[<span class="dv">3</span><span class="dt">L</span>, ], <span class="fu">c</span>(<span class="at">cat =</span> <span class="dv">1</span>, <span class="at">dog =</span> <span class="dv">0</span>, <span class="at">bird =</span> <span class="dv">0</span>)))</span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">colnames</span>(multiclass_one_hot), classes),</span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a>          <span class="fu">all</span>(<span class="fu">rowSums</span>(multiclass_one_hot) <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a>          <span class="fu">identical</span>(multiclass_class, <span class="fu">factor</span>(classes[<span class="fu">max.col</span>(multiclass_one_hot)], <span class="at">levels =</span> classes)))</span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a></span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a><span class="co"># Missing decisions give missing rows and keep the row order.</span></span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">venn_abers_one_hot</span>(<span class="fu">factor</span>(<span class="fu">c</span>(<span class="st">&quot;bird&quot;</span>, <span class="cn">NA</span>, <span class="st">&quot;cat&quot;</span>), <span class="at">levels =</span> classes)))</span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a></span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a><span class="co"># Workflow, Grid, parsnip and frozen predictions pass their `.pred_class` table:</span></span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a><span class="co">#   venn_abers_one_hot(predict(fitted_workflow, new_data, type = &quot;class&quot;))</span></span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a><span class="co"># Schema-encoded tables keep the encoded class names; decode first for originals:</span></span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a><span class="co">#   venn_abers_one_hot(venn_abers_decode(prediction, schema)$class)</span></span></code></pre></div>
+</div>
+<div id="inductive-regression" class="section level2">
+<h2>Inductive regression</h2>
+<p><code>inductive-regression.R</code>: Fit an independent linear model,
+calibrate numeric predictions and report RMSE/MAE on separate assessment
+data.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># After installation: source(system.file(&quot;examples&quot;, &quot;inductive-regression.R&quot;,</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#                                       package = &quot;vennabers&quot;))</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;assertions.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co"># Independent IID observations; roles are fixed before examining their outcomes.</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260907</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">240</span>, <span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="fu">seq_along</span>(x), <span class="at">x =</span> x, <span class="at">truth =</span> <span class="dv">2</span> <span class="sc">+</span> x <span class="sc">+</span> .<span class="dv">4</span> <span class="sc">*</span> x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">240</span>))</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>training <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">120</span>, ]</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> data[<span class="dv">121</span><span class="sc">:</span><span class="dv">180</span>, ]</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> data[<span class="dv">181</span><span class="sc">:</span><span class="dv">240</span>, ]</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">c</span>(training<span class="sc">$</span>id, calibration<span class="sc">$</span>id, assessment<span class="sc">$</span>id)))</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co"># Only training data determine this model; no preprocessing or tuning uses the</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co"># calibration or assessment observations. The caller retains the fixed model.</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> training)</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>calibration_prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, calibration)</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">venn_abers_regression</span>(calibration<span class="sc">$</span>truth, calibration_prediction, <span class="at">epsilon =</span> .<span class="dv">1</span>)</span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>uncalibrated <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, assessment)</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, uncalibrated)</span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">list</span>(<span class="at">requested =</span> fit<span class="sc">$</span>requested, <span class="at">m =</span> fit<span class="sc">$</span>m, <span class="at">epsilon =</span> fit<span class="sc">$</span>epsilon))</span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co"># Assessment truths enter only here. These are point-prediction scores in target</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co"># units; the VA bounds concern regularized conditional expectations, not coverage</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co"># of individual outcomes. Neither improvement nor a general selector guarantee</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co"># for this particular point merger is promised.</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a>scores <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">list</span>(<span class="at">uncalibrated =</span> uncalibrated, <span class="at">calibrated =</span> result<span class="sc">$</span>prediction),</span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a>                 <span class="cf">function</span>(prediction) {</span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a>                   <span class="fu">c</span>(<span class="at">RMSE =</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a>                     <span class="at">MAE =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction)))</span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a>                 }, <span class="fu">c</span>(<span class="at">RMSE =</span> <span class="dv">0</span>, <span class="at">MAE =</span> <span class="dv">0</span>))</span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a><span class="fu">assert_conditions</span>(<span class="fu">all</span>(<span class="fu">is.finite</span>(scores)), <span class="fu">nrow</span>(result) <span class="sc">==</span> <span class="fu">nrow</span>(assessment),</span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a>          <span class="fu">all</span>(result<span class="sc">$</span>lower <span class="sc">&lt;=</span> result<span class="sc">$</span>prediction), <span class="fu">all</span>(result<span class="sc">$</span>prediction <span class="sc">&lt;=</span> result<span class="sc">$</span>upper),</span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a>          <span class="fu">abs</span>(scores[<span class="st">&quot;RMSE&quot;</span>, <span class="st">&quot;calibrated&quot;</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span></span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a>              <span class="fu">sum</span>((assessment<span class="sc">$</span>truth <span class="sc">-</span> result<span class="sc">$</span>prediction)<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">nrow</span>(assessment)) <span class="sc">&lt;</span> <span class="fl">1e-12</span>,</span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a>          <span class="fu">abs</span>(scores[<span class="st">&quot;MAE&quot;</span>, <span class="st">&quot;calibrated&quot;</span>] <span class="sc">-</span></span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a>              <span class="fu">sum</span>(<span class="fu">abs</span>(assessment<span class="sc">$</span>truth <span class="sc">-</span> result<span class="sc">$</span>prediction)) <span class="sc">/</span> <span class="fu">nrow</span>(assessment)) <span class="sc">&lt;</span> <span class="fl">1e-12</span>)</span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a><span class="fu">print</span>(scores)</span></code></pre></div>
+</div>
+<div id="cross-regression" class="section level2">
+<h2>Cross regression</h2>
+<p><code>cross-regression.R</code>: Retain matching fold models and
+inspect the equal-weight merger of regression points and bounds.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># After installation: source(system.file(&quot;examples&quot;, &quot;cross-regression.R&quot;,</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#                                       package = &quot;vennabers&quot;))</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># IID observations; fold membership and the separate assessment role are fixed</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co"># before examining outcomes. Unequal folds still receive equal aggregate weight.</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260908</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">240</span>, <span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">id =</span> <span class="fu">seq_along</span>(x), <span class="at">x =</span> x, <span class="at">truth =</span> <span class="dv">2</span> <span class="sc">+</span> x <span class="sc">+</span> .<span class="dv">4</span> <span class="sc">*</span> x<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">240</span>))</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>development <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">180</span>, ]</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> data[<span class="dv">181</span><span class="sc">:</span><span class="dv">240</span>, ]</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>fold <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>), <span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>)))</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>ids <span class="ot">&lt;-</span> <span class="fu">unique</span>(fold)</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">vector</span>(<span class="st">&quot;list&quot;</span>, <span class="fu">length</span>(ids)), ids)</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>out_of_fold <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">nrow</span>(development))</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>newdata <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA_real_</span>, <span class="fu">nrow</span>(assessment), <span class="fu">length</span>(ids), <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, ids))</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="cf">for</span> (id <span class="cf">in</span> ids) {</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  held_out <span class="ot">&lt;-</span> fold <span class="sc">==</span> id</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  training <span class="ot">&lt;-</span> development[<span class="sc">!</span>held_out, ]</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>  calibration <span class="ot">&lt;-</span> development[held_out, ]</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(training<span class="sc">$</span>id <span class="sc">%in%</span> <span class="fu">c</span>(calibration<span class="sc">$</span>id, assessment<span class="sc">$</span>id)),</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>            <span class="sc">!</span><span class="fu">any</span>(calibration<span class="sc">$</span>id <span class="sc">%in%</span> assessment<span class="sc">$</span>id))</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>  <span class="co"># No learned preprocessing or tuning outside this training set. The caller</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>  <span class="co"># retains this exact model for both its calibration and assessment predictions.</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>  models[[id]] <span class="ot">&lt;-</span> <span class="fu">lm</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> training)</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>  out_of_fold[held_out] <span class="ot">&lt;-</span> <span class="fu">predict</span>(models[[id]], calibration)</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>  newdata[, id] <span class="ot">&lt;-</span> <span class="fu">predict</span>(models[[id]], assessment)</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>}</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cross_venn_abers_regression</span>(development<span class="sc">$</span>truth, out_of_fold, fold, <span class="at">epsilon =</span> .<span class="dv">1</span>)</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>details <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, newdata, <span class="at">type =</span> <span class="st">&quot;details&quot;</span>)</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">lapply</span>(fit<span class="sc">$</span>calibrators, <span class="cf">function</span>(x) x[<span class="fu">c</span>(<span class="st">&quot;observations&quot;</span>, <span class="st">&quot;requested&quot;</span>, <span class="st">&quot;m&quot;</span>, <span class="st">&quot;epsilon&quot;</span>)]))</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>result <span class="ot">&lt;-</span> details<span class="sc">$</span>prediction</span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="cf">for</span> (column <span class="cf">in</span> <span class="fu">names</span>(result)) {</span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a>  reconstructed <span class="ot">&lt;-</span> <span class="fu">Reduce</span>(<span class="st">`</span><span class="at">+</span><span class="st">`</span>, <span class="fu">lapply</span>(details<span class="sc">$</span>folds, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, column)) <span class="sc">/</span> <span class="fu">length</span>(ids)</span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">abs</span>(result[[column]] <span class="sc">-</span> reconstructed) <span class="sc">&lt;=</span> <span class="fl">1e-10</span> <span class="sc">+</span> <span class="fl">1e-10</span> <span class="sc">*</span> <span class="fu">abs</span>(reconstructed)))</span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a>}</span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a></span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="co"># Matching names cannot prove model provenance or semantic row identity. Each</span></span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co"># column above uses the same assessment rows in the same order. A model refitted</span></span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co"># on all development data cannot replace these fold models. Predict trains nothing.</span></span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co"># Assessment truths enter only in scoring. Aggregated bounds are descriptive</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co"># fold summaries, with no additional coverage or selector guarantee; improvement</span></span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co"># in point-prediction scores is not promised.</span></span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a>scores <span class="ot">&lt;-</span> <span class="fu">vapply</span>(<span class="fu">list</span>(<span class="at">uncalibrated =</span> <span class="fu">rowMeans</span>(newdata), <span class="at">calibrated =</span> result<span class="sc">$</span>prediction),</span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a>                 <span class="cf">function</span>(prediction) {</span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a>                   <span class="fu">c</span>(<span class="at">RMSE =</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a>                     <span class="at">MAE =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(assessment<span class="sc">$</span>truth <span class="sc">-</span> prediction)))</span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a>                 }, <span class="fu">c</span>(<span class="at">RMSE =</span> <span class="dv">0</span>, <span class="at">MAE =</span> <span class="dv">0</span>))</span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">is.finite</span>(scores)), <span class="fu">nrow</span>(result) <span class="sc">==</span> <span class="fu">nrow</span>(assessment),</span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a>          <span class="fu">all</span>(result<span class="sc">$</span>lower <span class="sc">&lt;=</span> result<span class="sc">$</span>prediction), <span class="fu">all</span>(result<span class="sc">$</span>prediction <span class="sc">&lt;=</span> result<span class="sc">$</span>upper))</span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a><span class="cf">for</span> (column <span class="cf">in</span> <span class="fu">colnames</span>(scores)) {</span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a>  residual <span class="ot">&lt;-</span> assessment<span class="sc">$</span>truth <span class="sc">-</span> <span class="cf">if</span> (column <span class="sc">==</span> <span class="st">&quot;calibrated&quot;</span>) result<span class="sc">$</span>prediction <span class="cf">else</span> <span class="fu">rowMeans</span>(newdata)</span>
+<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">abs</span>(scores[<span class="st">&quot;RMSE&quot;</span>, column]<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> <span class="fu">sum</span>(residual<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">length</span>(residual)) <span class="sc">&lt;</span> <span class="fl">1e-12</span>,</span>
+<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a>            <span class="fu">abs</span>(scores[<span class="st">&quot;MAE&quot;</span>, column] <span class="sc">-</span> <span class="fu">sum</span>(<span class="fu">abs</span>(residual)) <span class="sc">/</span> <span class="fu">length</span>(residual)) <span class="sc">&lt;</span> <span class="fl">1e-12</span>)</span>
+<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a>}</span>
+<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a><span class="fu">print</span>(scores)</span></code></pre></div>
+</div>
+<div id="calibration-graphics" class="section level2">
+<h2>Fit diagnoses and assessment graphics</h2>
+<p><code>calibration-graphics.R</code>: Draw the stored calibration map
+and Venn-Abers width of binary, Cross and regression fits, then assess
+held-out pairs with a seeded CORP reliability diagram, its Brier
+decomposition and a regression plot.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># After installation: source(system.file(&quot;examples&quot;, &quot;calibration-graphics.R&quot;,</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#                                       package = &quot;vennabers&quot;))</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">system.file</span>(<span class="st">&quot;examples&quot;</span>, <span class="st">&quot;assertions.R&quot;</span>, <span class="at">package =</span> <span class="st">&quot;vennabers&quot;</span>))</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co"># Fit diagnoses draw the stored state of a calibrator and need no new truth</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co"># values. Assessment graphics need held-out pairs of truth and prediction.</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20261021</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>observations <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rnorm</span>(<span class="dv">900</span><span class="dt">L</span>))</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>observations<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="dv">900</span><span class="dt">L</span>, <span class="dv">1</span><span class="dt">L</span>, stats<span class="sc">::</span><span class="fu">plogis</span>(<span class="fl">0.3</span> <span class="sc">+</span> <span class="fl">1.5</span> <span class="sc">*</span> observations<span class="sc">$</span>x))</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>training <span class="ot">&lt;-</span> observations[<span class="dv">1</span><span class="sc">:</span><span class="dv">300</span>, ]</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> observations[<span class="dv">301</span><span class="sc">:</span><span class="dv">600</span>, ]</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> observations[<span class="dv">601</span><span class="sc">:</span><span class="dv">900</span>, ]</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>model <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">glm</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> training, <span class="at">family =</span> stats<span class="sc">::</span><span class="fu">binomial</span>())</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>calibration_probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, calibration, <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>assessment_probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, assessment, <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>calibrator <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(calibration<span class="sc">$</span>truth, calibration_probability)</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(calibrator, assessment_probability)<span class="sc">$</span>probability</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co"># A temporary PDF also works without an interactive display. Close and remove</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co"># it even on error. For interactive plots, call the functions directly.</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>  plot_file <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.pdf&quot;</span>)</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>  <span class="fu">on.exit</span>(<span class="fu">unlink</span>(plot_file), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>  grDevices<span class="sc">::</span><span class="fu">pdf</span>(plot_file)</span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>  <span class="fu">on.exit</span>(grDevices<span class="sc">::</span><span class="fu">dev.off</span>(), <span class="at">add =</span> <span class="cn">TRUE</span>, <span class="at">after =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>  <span class="co"># Fit diagnosis: the calibration map and the Venn-Abers width upper - lower</span></span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>  <span class="co"># at every stored knot. The width is neither a confidence level nor a</span></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>  <span class="co"># nominal coverage.</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>  map <span class="ot">&lt;-</span> <span class="fu">plot</span>(calibrator, <span class="at">which =</span> <span class="fu">c</span>(<span class="st">&quot;map&quot;</span>, <span class="st">&quot;width&quot;</span>))</span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>  stored <span class="ot">&lt;-</span> <span class="fu">predict</span>(calibrator, map<span class="sc">$</span>score)</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>  <span class="fu">assert_conditions</span>(</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>    <span class="fu">identical</span>(<span class="fu">names</span>(map), <span class="fu">c</span>(<span class="st">&quot;score&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>, <span class="st">&quot;probability&quot;</span>, <span class="st">&quot;width&quot;</span>)),</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>    <span class="fu">identical</span>(map<span class="sc">$</span>width, map<span class="sc">$</span>upper <span class="sc">-</span> map<span class="sc">$</span>lower),</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a>    <span class="fu">identical</span>(map<span class="sc">$</span>probability, stored<span class="sc">$</span>probability),</span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a>    <span class="fu">identical</span>(<span class="fu">range</span>(map<span class="sc">$</span>score), <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a>  )</span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(map))</span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a></span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a>  <span class="co"># Cross fits overlay the map of every fold calibrator; the table keeps one</span></span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a>  <span class="co"># block per fold, not the aggregated Cross probability.</span></span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a>  fold <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>), <span class="at">length.out =</span> <span class="fu">nrow</span>(calibration))</span>
+<span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a>  cross <span class="ot">&lt;-</span> <span class="fu">cross_venn_abers</span>(calibration<span class="sc">$</span>truth, calibration_probability, fold)</span>
+<span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a>  fold_maps <span class="ot">&lt;-</span> <span class="fu">plot</span>(cross, <span class="at">loss =</span> <span class="st">&quot;brier&quot;</span>)</span>
+<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">unique</span>(fold_maps<span class="sc">$</span>fold), <span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>)))</span>
+<span id="cb10-48"><a href="#cb10-48" tabindex="-1"></a></span>
+<span id="cb10-49"><a href="#cb10-49" tabindex="-1"></a>  <span class="co"># Assessment graphic: the CORP reliability diagram of the held-out pairs.</span></span>
+<span id="cb10-50"><a href="#cb10-50" tabindex="-1"></a>  <span class="co"># The default consistency band shows where the estimate of perfectly</span></span>
+<span id="cb10-51"><a href="#cb10-51" tabindex="-1"></a>  <span class="co"># calibrated probabilities would fall; a seed makes it reproducible without</span></span>
+<span id="cb10-52"><a href="#cb10-52" tabindex="-1"></a>  <span class="co"># changing the caller&#39;s random stream.</span></span>
+<span id="cb10-53"><a href="#cb10-53" tabindex="-1"></a>  state <span class="ot">&lt;-</span> .Random.seed</span>
+<span id="cb10-54"><a href="#cb10-54" tabindex="-1"></a>  corp <span class="ot">&lt;-</span> <span class="fu">corp_plot</span>(assessment<span class="sc">$</span>truth, probability, <span class="at">seed =</span> <span class="dv">1</span>)</span>
+<span id="cb10-55"><a href="#cb10-55" tabindex="-1"></a>  <span class="fu">assert_conditions</span>(</span>
+<span id="cb10-56"><a href="#cb10-56" tabindex="-1"></a>    <span class="fu">identical</span>(.Random.seed, state),</span>
+<span id="cb10-57"><a href="#cb10-57" tabindex="-1"></a>    <span class="fu">identical</span>(corp, <span class="fu">corp_plot</span>(assessment<span class="sc">$</span>truth, probability, <span class="at">seed =</span> <span class="dv">1</span>)),</span>
+<span id="cb10-58"><a href="#cb10-58" tabindex="-1"></a>    <span class="fu">identical</span>(corp<span class="sc">$</span>probability, <span class="fu">sort</span>(<span class="fu">unique</span>(probability))),</span>
+<span id="cb10-59"><a href="#cb10-59" tabindex="-1"></a>    <span class="fu">sum</span>(corp<span class="sc">$</span>count) <span class="sc">==</span> <span class="fu">nrow</span>(assessment),</span>
+<span id="cb10-60"><a href="#cb10-60" tabindex="-1"></a>    <span class="fu">all</span>(<span class="fu">diff</span>(corp<span class="sc">$</span>estimate) <span class="sc">&gt;=</span> <span class="dv">0</span>),</span>
+<span id="cb10-61"><a href="#cb10-61" tabindex="-1"></a>    <span class="fu">all</span>(corp<span class="sc">$</span>band_lower <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> corp<span class="sc">$</span>band_upper <span class="sc">&lt;=</span> <span class="dv">1</span>)</span>
+<span id="cb10-62"><a href="#cb10-62" tabindex="-1"></a>  )</span>
+<span id="cb10-63"><a href="#cb10-63" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(corp))</span>
+<span id="cb10-64"><a href="#cb10-64" tabindex="-1"></a></span>
+<span id="cb10-65"><a href="#cb10-65" tabindex="-1"></a>  <span class="co"># The decomposition splits the Brier score of the same pairs into</span></span>
+<span id="cb10-66"><a href="#cb10-66" tabindex="-1"></a>  <span class="co"># miscalibration, discrimination and uncertainty.</span></span>
+<span id="cb10-67"><a href="#cb10-67" tabindex="-1"></a>  parts <span class="ot">&lt;-</span> <span class="fu">corp_decomposition_plot</span>(assessment<span class="sc">$</span>truth, probability)</span>
+<span id="cb10-68"><a href="#cb10-68" tabindex="-1"></a>  <span class="fu">assert_conditions</span>(</span>
+<span id="cb10-69"><a href="#cb10-69" tabindex="-1"></a>    <span class="fu">abs</span>(parts<span class="sc">$</span>brier <span class="sc">-</span> <span class="fu">brier_score</span>(assessment<span class="sc">$</span>truth, probability)) <span class="sc">&lt;</span> <span class="fl">1e-12</span>,</span>
+<span id="cb10-70"><a href="#cb10-70" tabindex="-1"></a>    <span class="fu">abs</span>(parts<span class="sc">$</span>brier <span class="sc">-</span> (parts<span class="sc">$</span>mcb <span class="sc">-</span> parts<span class="sc">$</span>dsc <span class="sc">+</span> parts<span class="sc">$</span>unc)) <span class="sc">&lt;</span> <span class="fl">1e-12</span></span>
+<span id="cb10-71"><a href="#cb10-71" tabindex="-1"></a>  )</span>
+<span id="cb10-72"><a href="#cb10-72" tabindex="-1"></a>  <span class="fu">print</span>(parts)</span>
+<span id="cb10-73"><a href="#cb10-73" tabindex="-1"></a></span>
+<span id="cb10-74"><a href="#cb10-74" tabindex="-1"></a>  <span class="co"># Regression: the map over the uncalibrated prediction with reference lines</span></span>
+<span id="cb10-75"><a href="#cb10-75" tabindex="-1"></a>  <span class="co"># at the moderated truths a and b, then held-out pairs against the</span></span>
+<span id="cb10-76"><a href="#cb10-76" tabindex="-1"></a>  <span class="co"># calibrated points.</span></span>
+<span id="cb10-77"><a href="#cb10-77" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">600</span><span class="dt">L</span>, <span class="dv">0</span>, <span class="dv">10</span>)</span>
+<span id="cb10-78"><a href="#cb10-78" tabindex="-1"></a>  regression_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> x, <span class="at">truth =</span> x <span class="sc">+</span> <span class="fu">sin</span>(x) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">600</span><span class="dt">L</span>, <span class="at">sd =</span> <span class="fl">0.5</span>))</span>
+<span id="cb10-79"><a href="#cb10-79" tabindex="-1"></a>  regression_model <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">lm</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> regression_data[<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>, ])</span>
+<span id="cb10-80"><a href="#cb10-80" tabindex="-1"></a>  uncalibrated <span class="ot">&lt;-</span> <span class="fu">predict</span>(regression_model, regression_data)</span>
+<span id="cb10-81"><a href="#cb10-81" tabindex="-1"></a>  regression <span class="ot">&lt;-</span> <span class="fu">venn_abers_regression</span>(regression_data<span class="sc">$</span>truth[<span class="dv">201</span><span class="sc">:</span><span class="dv">400</span>],</span>
+<span id="cb10-82"><a href="#cb10-82" tabindex="-1"></a>                                      uncalibrated[<span class="dv">201</span><span class="sc">:</span><span class="dv">400</span>])</span>
+<span id="cb10-83"><a href="#cb10-83" tabindex="-1"></a>  regression_map <span class="ot">&lt;-</span> <span class="fu">plot</span>(regression, <span class="at">which =</span> <span class="fu">c</span>(<span class="st">&quot;map&quot;</span>, <span class="st">&quot;width&quot;</span>))</span>
+<span id="cb10-84"><a href="#cb10-84" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(regression_map<span class="sc">$</span>width,</span>
+<span id="cb10-85"><a href="#cb10-85" tabindex="-1"></a>                      regression_map<span class="sc">$</span>upper <span class="sc">-</span> regression_map<span class="sc">$</span>lower))</span>
+<span id="cb10-86"><a href="#cb10-86" tabindex="-1"></a>  point <span class="ot">&lt;-</span> <span class="fu">predict</span>(regression, uncalibrated[<span class="dv">401</span><span class="sc">:</span><span class="dv">600</span>])<span class="sc">$</span>prediction</span>
+<span id="cb10-87"><a href="#cb10-87" tabindex="-1"></a>  held_out_truth <span class="ot">&lt;-</span> regression_data<span class="sc">$</span>truth[<span class="dv">401</span><span class="sc">:</span><span class="dv">600</span>]</span>
+<span id="cb10-88"><a href="#cb10-88" tabindex="-1"></a>  held_out_pairs <span class="ot">&lt;-</span> <span class="fu">regression_plot</span>(held_out_truth, point,</span>
+<span id="cb10-89"><a href="#cb10-89" tabindex="-1"></a>                                    <span class="at">which =</span> <span class="fu">c</span>(<span class="st">&quot;observed&quot;</span>, <span class="st">&quot;residual&quot;</span>))</span>
+<span id="cb10-90"><a href="#cb10-90" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">identical</span>(held_out_pairs<span class="sc">$</span>residual, held_out_truth <span class="sc">-</span> point))</span>
+<span id="cb10-91"><a href="#cb10-91" tabindex="-1"></a>})</span>
+<span id="cb10-92"><a href="#cb10-92" tabindex="-1"></a></span>
+<span id="cb10-93"><a href="#cb10-93" tabindex="-1"></a><span class="co"># CORP bands are pointwise resampling bands for the assessment pairs given.</span></span>
+<span id="cb10-94"><a href="#cb10-94" tabindex="-1"></a><span class="co"># They are not Venn-Abers lower and upper probabilities, and neither graphic</span></span>
+<span id="cb10-95"><a href="#cb10-95" tabindex="-1"></a><span class="co"># makes a statement about Venn-Abers validity.</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

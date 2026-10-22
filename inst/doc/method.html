@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Venn-Abers methods and their guarantees</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Venn-Abers methods and their
+guarantees</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#calibration-as-a-problem" id="toc-calibration-as-a-problem">Calibration as a problem</a></li>
+<li><a href="#inductive-venn-abers" id="toc-inductive-venn-abers">Inductive Venn-Abers</a></li>
+<li><a href="#what-the-validity-guarantee-says" id="toc-what-the-validity-guarantee-says">What the validity guarantee
+says</a></li>
+<li><a href="#one-probability-from-two" id="toc-one-probability-from-two">One probability from two</a></li>
+<li><a href="#cross-venn-abers" id="toc-cross-venn-abers">Cross
+Venn-Abers</a></li>
+<li><a href="#multiclass-calibration" id="toc-multiclass-calibration">Multiclass calibration</a></li>
+<li><a href="#regression" id="toc-regression">Regression</a></li>
+<li><a href="#in-practice" id="toc-in-practice">In practice</a></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul>
+</div>
+
+<p>This guide explains what the functions in <code>vennabers</code>
+compute and what the literature guarantees about it. It comes before the
+practical guides: read it to understand the method, then continue with
+<code>vignette(&quot;manual-calibration&quot;, package = &quot;vennabers&quot;)</code> for
+the interfaces. Every formula below is checked against the package by a
+code chunk that uses only base R and the manual functions; the vignette
+stops if a check fails.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span></code></pre></div>
+<div id="calibration-as-a-problem" class="section level2">
+<h2>Calibration as a problem</h2>
+<p>A classifier that outputs a probability <span class="math inline">\(P\)</span> for the event <span class="math inline">\(Y = 1\)</span> is <strong>calibrated</strong> if
+the event happens with that frequency among cases that receive it: <span class="math inline">\(E(Y \mid P) = P\)</span>. Many models rank cases
+well but are over- or underconfident, so their scores need a calibration
+map from score to probability. The map is learned on a
+<strong>calibration set</strong>: observations that the model never saw
+while it was trained, preprocessed or tuned.</p>
+<p>Two classical calibration maps are:</p>
+<ul>
+<li><strong>Platt scaling</strong> (Platt, 2000) fits a sigmoid <span class="math inline">\(1 / (1 + \exp(As + B))\)</span> to the scores
+<span class="math inline">\(s\)</span> by maximum likelihood. Two
+parameters make it stable on small calibration sets, but it cannot
+correct miscalibration whose shape is not a sigmoid, however much data
+there is (Vovk, Petej and Fedorova, 2015, Section 5.1).</li>
+<li><strong>Isotonic calibration</strong> (Zadrozny and Elkan, 2002)
+fits any non-decreasing map with the pool-adjacent-violators algorithm.
+It learns arbitrary monotone shapes but overfits small calibration sets
+and can output exactly 0 or 1, which gives an infinite log loss as soon
+as such a case has the other outcome (Vovk, Petej and Fedorova, 2015,
+Section 5.2).</li>
+</ul>
+<p>Venn-Abers predictors (Vovk and Petej, 2014) keep the flexibility of
+isotonic regression and add a validity guarantee. Instead of one
+isotonic fit on the calibration set they make two, each including the
+new case with one of the two possible labels.
+<code>vignette(&quot;comparison&quot;, package = &quot;vennabers&quot;)</code> applies all
+three maps to one simulated data set.</p>
+</div>
+<div id="inductive-venn-abers" class="section level2">
+<h2>Inductive Venn-Abers</h2>
+<p>An <strong>Inductive Venn-Abers predictor</strong> (IVAP; Vovk, Petej
+and Fedorova, 2015, Section 2) proceeds as follows:</p>
+<ol style="list-style-type: decimal">
+<li>Split the training data into a <strong>proper training set</strong>
+and a <strong>calibration set</strong> of size <span class="math inline">\(k\)</span>.</li>
+<li>Train the scoring model on the proper training set only.</li>
+<li>Compute the scores <span class="math inline">\(s_1, \ldots,
+s_k\)</span> of the calibration observations, with labels <span class="math inline">\(y_1, \ldots, y_k \in \{0, 1\}\)</span>.</li>
+<li>For a new case with score <span class="math inline">\(s\)</span>,
+fit isotonic regression to <span class="math inline">\((s_1, y_1),
+\ldots, (s_k, y_k), (s, 0)\)</span> and call its value at <span class="math inline">\(s\)</span> <span class="math inline">\(p_0\)</span>. Fit it again to <span class="math inline">\((s_1, y_1), \ldots, (s_k, y_k), (s, 1)\)</span>
+and call its value at <span class="math inline">\(s\)</span> <span class="math inline">\(p_1\)</span>.</li>
+</ol>
+<p>The prediction is the pair <span class="math inline">\((p_0,
+p_1)\)</span>, with <span class="math inline">\(p_0 &lt; p_1\)</span>:
+the probability of the event is either <span class="math inline">\(p_0\)</span> or <span class="math inline">\(p_1\)</span>. In the package these are the columns
+<code>lower</code> and <code>upper</code> of <code>predict()</code> on a
+fit from <code>venn_abers()</code>. Tied scores are pooled, as in the
+paper’s construction. The package computes all possible pairs once at
+fit time, so prediction only looks them up.</p>
+<p>The chunk below recomputes both values for one new case with
+<code>stats::isoreg()</code> and compares them with the package. The
+model is underconfident: its scores are flatter than the true event
+probabilities.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">48</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">40</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(k)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">runif</span>(k) <span class="sc">&lt;</span> <span class="fu">plogis</span>(<span class="dv">2</span> <span class="sc">*</span> x)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>score <span class="ot">&lt;-</span> <span class="fu">plogis</span>(<span class="fl">0.5</span> <span class="sc">*</span> x)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>new_score <span class="ot">&lt;-</span> <span class="fu">plogis</span>(<span class="fl">0.5</span> <span class="sc">*</span> <span class="fl">0.3</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># Value at the new case of the isotonic fit that includes it with `label`.</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>isotonic_at_new <span class="ot">&lt;-</span> <span class="cf">function</span>(score, label, new_score, new_label) {</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  scores <span class="ot">&lt;-</span> <span class="fu">c</span>(score, new_score)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  o <span class="ot">&lt;-</span> <span class="fu">order</span>(scores)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">isoreg</span>(scores[o], <span class="fu">c</span>(label, new_label)[o])</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  fit<span class="sc">$</span>yf[o <span class="sc">==</span> <span class="fu">length</span>(scores)]</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>}</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>p0 <span class="ot">&lt;-</span> <span class="fu">isotonic_at_new</span>(score, truth, new_score, <span class="dv">0</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>p1 <span class="ot">&lt;-</span> <span class="fu">isotonic_at_new</span>(score, truth, new_score, <span class="dv">1</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>calibrator <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth, score)</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>package <span class="ot">&lt;-</span> <span class="fu">predict</span>(calibrator, new_score)</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">by_hand =</span> <span class="fu">c</span>(<span class="at">lower =</span> p0, <span class="at">upper =</span> p1), <span class="at">package =</span> <span class="fu">unlist</span>(package[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]))</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt;         lower     upper</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; by_hand   0.4 0.9090909</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; package   0.4 0.9090909</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(<span class="fu">c</span>(p0, p1), <span class="fu">c</span>(package<span class="sc">$</span>lower, package<span class="sc">$</span>upper))))</span></code></pre></div>
+</div>
+<div id="what-the-validity-guarantee-says" class="section level2">
+<h2>What the validity guarantee says</h2>
+<p>A <strong>selector</strong> picks one of the two values. Vovk, Petej
+and Fedorova (2015, Proposition 1) show that there is a selector <span class="math inline">\(S\)</span> for which <span class="math inline">\(p_S\)</span> is perfectly calibrated, <span class="math inline">\(E(Y \mid p_S) = p_S\)</span>, provided the
+training observations and the new observation are independent and
+identically distributed. The selector is the true label itself, <span class="math inline">\(S = Y\)</span>. The proof only needs the
+calibration observations and the new observation to be exchangeable
+given the proper training set. It holds for any scoring model, however
+poor. A poor model gives wide or uninformative pairs, not invalid ones.
+Venn-Abers predictors are a special case of Venn predictors, which share
+this property (Vovk, Gammerman and Shafer, 2022, Chapter 6).</p>
+<p>The simulation below repeats the setting above 2000 times with fresh
+calibration sets and new cases. It keeps <span class="math inline">\(p_Y\)</span>, the value that the true label
+selects, and compares its average with the observed event frequency in
+five groups of <span class="math inline">\(p_Y\)</span> of equal width.
+The two columns agree up to the simulation standard error.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>repetitions <span class="ot">&lt;-</span> <span class="dv">2000</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>selected <span class="ot">&lt;-</span> outcome <span class="ot">&lt;-</span> <span class="fu">numeric</span>(repetitions)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="cf">for</span> (r <span class="cf">in</span> <span class="fu">seq_len</span>(repetitions)) {</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(k <span class="sc">+</span> <span class="dv">1</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">runif</span>(k <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">&lt;</span> <span class="fu">plogis</span>(<span class="dv">2</span> <span class="sc">*</span> x)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">plogis</span>(<span class="fl">0.5</span> <span class="sc">*</span> x)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  pair <span class="ot">&lt;-</span> <span class="fu">predict</span>(<span class="fu">venn_abers</span>(y[<span class="dv">1</span><span class="sc">:</span>k], s[<span class="dv">1</span><span class="sc">:</span>k]), s[k <span class="sc">+</span> <span class="dv">1</span>])</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  selected[r] <span class="ot">&lt;-</span> <span class="cf">if</span> (y[k <span class="sc">+</span> <span class="dv">1</span>]) pair<span class="sc">$</span>upper <span class="cf">else</span> pair<span class="sc">$</span>lower</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  outcome[r] <span class="ot">&lt;-</span> y[k <span class="sc">+</span> <span class="dv">1</span>]</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>}</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>group <span class="ot">&lt;-</span> <span class="fu">cut</span>(selected, <span class="dv">0</span><span class="sc">:</span><span class="dv">5</span> <span class="sc">/</span> <span class="dv">5</span>, <span class="at">include.lowest =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>mean_p <span class="ot">&lt;-</span> <span class="fu">tapply</span>(selected, group, mean)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">cases =</span> <span class="fu">tabulate</span>(group, <span class="fu">nlevels</span>(group)),</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>           <span class="at">mean_selected =</span> mean_p,</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>           <span class="at">event_frequency =</span> <span class="fu">tapply</span>(outcome, group, mean),</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>           <span class="at">standard_error =</span> <span class="fu">sqrt</span>(mean_p <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> mean_p) <span class="sc">/</span> <span class="fu">tabulate</span>(group, <span class="fu">nlevels</span>(group))))</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt;           cases mean_selected event_frequency standard_error</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; [0,0.2]     613     0.0471794      0.04078303    0.008563504</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; (0.2,0.4]   268     0.3141909      0.28731343    0.028355090</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; (0.4,0.6]   277     0.5113314      0.52707581    0.030034373</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; (0.6,0.8]   285     0.7180902      0.73333333    0.026651532</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; (0.8,1]     557     0.9619581      0.96947935    0.008105536</span></span></code></pre></div>
+<p>The guarantee is narrower than it may look:</p>
+<ul>
+<li><strong>It needs the true label.</strong> The selector <span class="math inline">\(S = Y\)</span> is unknown when the prediction is
+made. The guarantee says that the pair always contains a calibrated
+value, not which one.</li>
+<li><strong>The bounds are not a confidence interval.</strong> Nothing
+guarantees that the true conditional probability lies between
+<code>lower</code> and <code>upper</code> with any stated frequency. The
+distance <code>upper - lower</code> shrinks as the calibration set
+grows, but it has no confidence level.</li>
+<li><strong>It is an average.</strong> Calibration holds over repeated
+calibration sets and new cases, not conditionally on one particular case
+or subgroup.</li>
+<li><strong>It needs the data roles.</strong> The guarantee fails if the
+scoring model saw calibration observations during training,
+preprocessing or tuning, if the new cases come from a different
+distribution, or if observations are dependent, as in many time
+series.</li>
+<li><strong>It does not promise accuracy.</strong> Calibration does not
+make the model rank cases better, and a calibrated probability can still
+be close to the base rate.</li>
+</ul>
+</div>
+<div id="one-probability-from-two" class="section level2">
+<h2>One probability from two</h2>
+<p>Most applications need one probability. Vovk, Petej and Fedorova
+(2015, Section 4) choose the value that minimizes the worst-case extra
+loss relative to the correct member of the pair. For log loss this gives
+<span class="math display">\[p = \frac{p_1}{1 - p_0 + p_1},\]</span> and
+for the Brier loss <span class="math display">\[p = p_1 + \frac{p_0^2 -
+p_1^2}{2}.\]</span> Both lie between <span class="math inline">\(p_0\)</span> and <span class="math inline">\(p_1\)</span>. <code>predict()</code> returns them
+as <code>probability</code> with <code>loss = &quot;log&quot;</code> (the default)
+or <code>loss = &quot;brier&quot;</code>, from the same fit.</p>
+<p><strong>Merging loses the formal guarantee.</strong> A merged
+probability is not covered by Proposition 1; its benefit is empirical
+(Vovk, Petej and Fedorova, 2015, abstract and Section 6). Unlike plain
+isotonic calibration, it never reaches 0 or 1. With log loss it stays
+within <span class="math inline">\([1/(k_0 + 2), 1 - 1/(k_1 +
+2)]\)</span>, where <span class="math inline">\(k_0\)</span> and <span class="math inline">\(k_1\)</span> count the calibration non-events and
+events (Lemma 2), even for a new score below all calibration scores:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>merged <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">log =</span> p1 <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> p0 <span class="sc">+</span> p1), <span class="at">brier =</span> p1 <span class="sc">+</span> (p0<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> p1<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>package <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">log =</span> <span class="fu">predict</span>(calibrator, new_score)<span class="sc">$</span>probability,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>             <span class="at">brier =</span> <span class="fu">predict</span>(calibrator, new_score, <span class="at">loss =</span> <span class="st">&quot;brier&quot;</span>)<span class="sc">$</span>probability)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">rbind</span>(<span class="at">by_hand =</span> merged, <span class="at">package =</span> package)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;               log     brier</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; by_hand 0.6024096 0.5758678</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; package 0.6024096 0.5758678</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(merged, package)))</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="fu">predict</span>(calibrator, <span class="fu">min</span>(score) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;   lower      upper probability</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 1     0 0.07692308  0.07142857</span></span></code></pre></div>
+</div>
+<div id="cross-venn-abers" class="section level2">
+<h2>Cross Venn-Abers</h2>
+<p>An IVAP uses only part of the data for training and only part for
+calibration. A <strong>Cross Venn-Abers predictor</strong> (CVAP; Vovk,
+Petej and Fedorova, 2015, Section 3) uses all of it. It splits the
+training data into <span class="math inline">\(K\)</span> folds. For
+each fold <span class="math inline">\(j\)</span>, a model trained on the
+other folds scores the fold, and an IVAP calibrated on the fold gives a
+pair <span class="math inline">\((p_0^j, p_1^j)\)</span> for the new
+case. The new case is scored by each of the <span class="math inline">\(K\)</span> fold models. The minimax merger of the
+<span class="math inline">\(K\)</span> pairs under log loss uses
+geometric means: <span class="math display">\[p =
+\frac{\mathrm{GM}(p_1)}{\mathrm{GM}(1 - p_0) +
+\mathrm{GM}(p_1)}.\]</span> Under the Brier loss it is the arithmetic
+mean of the fold-wise Brier probabilities, <span class="math inline">\(\frac{1}{K} \sum_j \left(p_1^j + \frac{(p_0^j)^2 -
+(p_1^j)^2}{2}\right)\)</span>.</p>
+<p>In <code>cross_venn_abers()</code> you supply the fold assignment and
+each calibration row’s score from its own fold model. At prediction time
+you supply one column of new scores per fold model, named by fold. The
+chunk below trains the fold models, then rebuilds both mergers from the
+fold-wise calibrators.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">15</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rnorm</span>(<span class="dv">150</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>data<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">runif</span>(<span class="dv">150</span>) <span class="sc">&lt;</span> <span class="fu">plogis</span>(data<span class="sc">$</span>x<span class="sc">^</span><span class="dv">3</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>fold <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="at">length.out =</span> <span class="dv">150</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>new_x <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="fl">0.2</span>, <span class="fl">1.5</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>cal_score <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">nrow</span>(data))</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>new_score <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA_real_</span>, <span class="fu">nrow</span>(new_x), <span class="dv">3</span>, <span class="at">dimnames =</span> <span class="fu">list</span>(<span class="cn">NULL</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>))</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>) {</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  model <span class="ot">&lt;-</span> <span class="fu">glm</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> data[fold <span class="sc">!=</span> j, ], <span class="at">family =</span> <span class="fu">binomial</span>())</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  cal_score[fold <span class="sc">==</span> j] <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, data[fold <span class="sc">==</span> j, ], <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  new_score[, j] <span class="ot">&lt;-</span> <span class="fu">predict</span>(model, new_x, <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>}</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>cross <span class="ot">&lt;-</span> <span class="fu">cross_venn_abers</span>(data<span class="sc">$</span>truth, cal_score, fold)</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>pairs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, <span class="cf">function</span>(j) {</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>  <span class="fu">predict</span>(<span class="fu">venn_abers</span>(data<span class="sc">$</span>truth[fold <span class="sc">==</span> j], cal_score[fold <span class="sc">==</span> j]),</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>          new_score[, j])</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>})</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>lower <span class="ot">&lt;-</span> <span class="fu">sapply</span>(pairs, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;lower&quot;</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>upper <span class="ot">&lt;-</span> <span class="fu">sapply</span>(pairs, <span class="st">`</span><span class="at">[[</span><span class="st">`</span>, <span class="st">&quot;upper&quot;</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a>gm <span class="ot">&lt;-</span> <span class="cf">function</span>(p) <span class="fu">exp</span>(<span class="fu">rowMeans</span>(<span class="fu">log</span>(p)))</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>by_hand <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">log =</span> <span class="fu">gm</span>(upper) <span class="sc">/</span> (<span class="fu">gm</span>(<span class="dv">1</span> <span class="sc">-</span> lower) <span class="sc">+</span> <span class="fu">gm</span>(upper)),</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a>                 <span class="at">brier =</span> <span class="fu">rowMeans</span>(upper <span class="sc">+</span> (lower<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> upper<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="dv">2</span>))</span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>package <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">log =</span> <span class="fu">predict</span>(cross, new_score)<span class="sc">$</span>probability,</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>                 <span class="at">brier =</span> <span class="fu">predict</span>(cross, new_score, <span class="at">loss =</span> <span class="st">&quot;brier&quot;</span>)<span class="sc">$</span>probability)</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>by_hand</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt;            log     brier</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; [1,] 0.2475567 0.2738056</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; [2,] 0.5511691 0.5499450</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt; [3,] 0.8494595 0.8330522</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(by_hand, package)))</span></code></pre></div>
+<p><code>predict(cross, new_score, type = &quot;details&quot;)</code> returns the
+fold pairs used here. A CVAP has no formal validity guarantee. Its
+authors report that calibration appears to be inherited in experiments
+(Vovk, Petej and Fedorova, 2015, Section 1). Each fold model must be the
+model that scored its fold, so a single model refitted on all data
+cannot replace them.</p>
+</div>
+<div id="multiclass-calibration" class="section level2">
+<h2>Multiclass calibration</h2>
+<p>For <span class="math inline">\(K &gt; 2\)</span> classes the package
+reduces the problem to binary Venn-Abers calibrations. It expects a
+matrix of uncalibrated class probabilities with one column per
+class.</p>
+<p><strong>One-vs-one</strong> (<code>method = &quot;ovo&quot;</code>, the
+default) follows Manokhin (2017). For each pair of classes <span class="math inline">\((i, j)\)</span> it keeps the calibration rows of
+these two classes. The pair score is <span class="math inline">\(p_j /
+(p_i + p_j)\)</span>, or 0.5 when both are zero. It calibrates the event
+“class <span class="math inline">\(j\)</span>” against “class <span class="math inline">\(i\)</span>” on these rows. The calibrated pairwise
+probabilities <span class="math inline">\(r_{ji}\)</span> and <span class="math inline">\(r_{ij} = 1 - r_{ji}\)</span> of a new case are
+coupled by the method of Price et al. (1995): <span class="math display">\[q_i = \frac{1}{\sum_{j \ne i} 1 / r_{ij} - (K -
+2)},\]</span> and normalized to sum to one. The merged pairwise
+probabilities follow <code>loss</code>, as in the binary case.</p>
+<p><strong>One-vs-rest</strong> (<code>method = &quot;ovr&quot;</code>) calibrates
+each class against all others on every calibration row, using that
+class’s column as the score. It then divides the merged class
+probabilities by their sum. This reduction is not taken from Manokhin
+(2017).</p>
+<p>The chunk below calibrates one pair by hand, then rebuilds the
+coupled class probabilities from the pair results.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">3</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>classes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>softmax <span class="ot">&lt;-</span> <span class="cf">function</span>(z) <span class="fu">exp</span>(z) <span class="sc">/</span> <span class="fu">rowSums</span>(<span class="fu">exp</span>(z))</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">300</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(classes[<span class="fu">apply</span>(<span class="fu">softmax</span>(<span class="fu">cbind</span>(<span class="dv">2</span> <span class="sc">*</span> x, <span class="sc">-</span><span class="dv">2</span> <span class="sc">*</span> x, <span class="dv">0</span>)), <span class="dv">1</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>                             <span class="cf">function</span>(p) <span class="fu">sample</span>(<span class="dv">3</span>, <span class="dv">1</span>, <span class="at">prob =</span> p))],</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>                <span class="at">levels =</span> classes)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">softmax</span>(<span class="fu">cbind</span>(<span class="at">a =</span> x, <span class="at">b =</span> <span class="sc">-</span>x, <span class="at">c =</span> <span class="dv">0</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>new_p <span class="ot">&lt;-</span> <span class="fu">softmax</span>(<span class="fu">cbind</span>(<span class="at">a =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="at">b =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="at">c =</span> <span class="dv">0</span>))</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>ovo <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth, p)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>pairs <span class="ot">&lt;-</span> <span class="fu">predict</span>(ovo, new_p, <span class="at">type =</span> <span class="st">&quot;details&quot;</span>)<span class="sc">$</span>pairs</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>rows <span class="ot">&lt;-</span> truth <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>ab <span class="ot">&lt;-</span> <span class="fu">venn_abers</span>(truth[rows] <span class="sc">==</span> <span class="st">&quot;b&quot;</span>, p[rows, <span class="st">&quot;b&quot;</span>] <span class="sc">/</span> <span class="fu">rowSums</span>(p[rows, <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>)]))</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>ab_new <span class="ot">&lt;-</span> <span class="fu">predict</span>(ab, new_p[, <span class="st">&quot;b&quot;</span>] <span class="sc">/</span> <span class="fu">rowSums</span>(new_p[, <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>)]))</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(ab_new<span class="sc">$</span>probability,</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>                           pairs<span class="sc">$</span>probability[pairs<span class="sc">$</span>non_event <span class="sc">==</span> <span class="st">&quot;a&quot;</span> <span class="sc">&amp;</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>                                               pairs<span class="sc">$</span>event <span class="sc">==</span> <span class="st">&quot;b&quot;</span>])))</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="cf">function</span>(i, j) {</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  forward <span class="ot">&lt;-</span> pairs<span class="sc">$</span>non_event <span class="sc">==</span> j <span class="sc">&amp;</span> pairs<span class="sc">$</span>event <span class="sc">==</span> i</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(forward)) pairs<span class="sc">$</span>probability[forward] <span class="cf">else</span></span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>    <span class="dv">1</span> <span class="sc">-</span> pairs<span class="sc">$</span>probability[pairs<span class="sc">$</span>non_event <span class="sc">==</span> i <span class="sc">&amp;</span> pairs<span class="sc">$</span>event <span class="sc">==</span> j]</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>}</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>q <span class="ot">&lt;-</span> <span class="fu">sapply</span>(classes, <span class="cf">function</span>(i) {</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>  <span class="dv">1</span> <span class="sc">/</span> (<span class="fu">Reduce</span>(<span class="st">`</span><span class="at">+</span><span class="st">`</span>, <span class="fu">lapply</span>(<span class="fu">setdiff</span>(classes, i), <span class="cf">function</span>(j) <span class="dv">1</span> <span class="sc">/</span> <span class="fu">r</span>(i, j))) <span class="sc">-</span></span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>         (<span class="fu">length</span>(classes) <span class="sc">-</span> <span class="dv">2</span>))</span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>})</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>coupled <span class="ot">&lt;-</span> q <span class="sc">/</span> <span class="fu">rowSums</span>(q)</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>coupled</span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a><span class="co">#&gt;               a          b          c</span></span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a><span class="co">#&gt; [1,] 0.03575501 0.85300720 0.11123779</span></span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a><span class="co">#&gt; [2,] 0.36532693 0.20005999 0.43461308</span></span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a><span class="co">#&gt; [3,] 0.86915161 0.05730962 0.07353877</span></span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(coupled, <span class="fu">predict</span>(ovo, new_p),</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>                           <span class="at">check.attributes =</span> <span class="cn">FALSE</span>)))</span></code></pre></div>
+<p>Each binary subproblem is an IVAP or CVAP. For one-vs-one, its
+guarantee covers only new cases from one of the pair’s two classes. No
+validity guarantee is claimed for the coupled or normalized class
+probabilities; Manokhin (2017) reports their accuracy empirically.</p>
+</div>
+<div id="regression" class="section level2">
+<h2>Regression</h2>
+<p><code>venn_abers_regression()</code> implements the unbounded
+Inductive Venn-Abers regressor (IVAR) of Petej and Vovk (2026, Sections
+3.2 and 4). The model’s real-valued predictions play the role of scores.
+Isotonic regression on the outcomes is again fitted twice with the new
+case included. Real outcomes have no natural lower and upper label to
+insert, so the calibration outcomes are moderated first. Let <span class="math inline">\(y_{(1)} \le \cdots \le y_{(k)}\)</span> be the
+sorted calibration outcomes and <span class="math inline">\(1 \le m \le
+\lfloor (k - 1) / 2 \rfloor\)</span>, with <span class="math inline">\(a
+= y_{(m)}\)</span> and <span class="math inline">\(b =
+y_{(k-m+1)}\)</span>:</p>
+<ul>
+<li>For the <strong>lower</strong> fit, outcomes below <span class="math inline">\(a\)</span> become <span class="math inline">\(a\)</span>, outcomes above <span class="math inline">\(y_{(k-m)}\)</span> become <span class="math inline">\(y_{(k-m)}\)</span>, and the new case is inserted
+with outcome <span class="math inline">\(a\)</span>. Its fitted value is
+the lower bound <span class="math inline">\(L\)</span>.</li>
+<li>For the <strong>upper</strong> fit, outcomes below <span class="math inline">\(y_{(m+1)}\)</span> become <span class="math inline">\(y_{(m+1)}\)</span>, outcomes above <span class="math inline">\(b\)</span> become <span class="math inline">\(b\)</span>, and the new case is inserted with
+outcome <span class="math inline">\(b\)</span>. Its fitted value is the
+upper bound <span class="math inline">\(U\)</span>.</li>
+</ul>
+<p>Extreme outcomes are replaced, never dropped. Instead of
+<code>m</code> you can give a level <code>epsilon</code>; the package
+then uses <span class="math inline">\(m = \lfloor \epsilon (k + 1) / 2
+\rfloor\)</span>, and the fit stores the effective level <span class="math inline">\(2m / (k + 1)\)</span>.</p>
+<p>Petej and Vovk (2026, Theorem 4) show for i.i.d. observations and
+<span class="math inline">\(2m &lt; k\)</span> that the winsorized
+outcome <span class="math inline">\(Y&#39;\)</span> (the outcome clipped
+to <span class="math inline">\([a, b]\)</span>) equals <span class="math inline">\(Y\)</span> with probability at least <span class="math inline">\(1 - 2m / (k + 1)\)</span>. They also show that a
+selector within <span class="math inline">\([L, U]\)</span> is
+auto-calibrated for <span class="math inline">\(Y&#39;\)</span>: <span class="math inline">\(E(Y&#39; \mid S) = S\)</span>. As in the binary
+case, the selector depends on the unknown outcome. The bounds concern a
+regularized conditional expectation. They are <strong>not a prediction
+interval</strong>: nothing says that a future outcome falls between
+<code>lower</code> and <code>upper</code> with probability <span class="math inline">\(1 - \epsilon\)</span>.</p>
+<p>The point prediction merges the bounds with weights <span class="math inline">\(w_L = L - a\)</span> and <span class="math inline">\(w_U = b - U\)</span>: <span class="math display">\[\hat y = \frac{w_L L + w_U U}{w_L +
+w_U},\]</span> the approximate minimax merger of Petej and Vovk (2026,
+formula 6). If both weights are zero, the package uses the midpoint
+<span class="math inline">\((L + U) / 2\)</span>. The merged point has
+no validity guarantee of its own.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">4</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="dv">25</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(k)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>outcome <span class="ot">&lt;-</span> <span class="fl">1.5</span> <span class="sc">*</span> prediction <span class="sc">+</span> <span class="fu">rnorm</span>(k)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>new_prediction <span class="ot">&lt;-</span> <span class="fl">0.4</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>sorted <span class="ot">&lt;-</span> <span class="fu">sort</span>(outcome)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>a <span class="ot">&lt;-</span> sorted[m]</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>b <span class="ot">&lt;-</span> sorted[k <span class="sc">-</span> m <span class="sc">+</span> <span class="dv">1</span>]</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>lower_outcome <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(outcome, a), sorted[k <span class="sc">-</span> m])</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>upper_outcome <span class="ot">&lt;-</span> <span class="fu">pmin</span>(<span class="fu">pmax</span>(outcome, sorted[m <span class="sc">+</span> <span class="dv">1</span>]), b)</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>L <span class="ot">&lt;-</span> <span class="fu">isotonic_at_new</span>(prediction, lower_outcome, new_prediction, a)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>U <span class="ot">&lt;-</span> <span class="fu">isotonic_at_new</span>(prediction, upper_outcome, new_prediction, b)</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>point <span class="ot">&lt;-</span> ((L <span class="sc">-</span> a) <span class="sc">*</span> L <span class="sc">+</span> (b <span class="sc">-</span> U) <span class="sc">*</span> U) <span class="sc">/</span> ((L <span class="sc">-</span> a) <span class="sc">+</span> (b <span class="sc">-</span> U))</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>by_hand <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">prediction =</span> point, <span class="at">lower =</span> L, <span class="at">upper =</span> U)</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>package <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">predict</span>(<span class="fu">venn_abers_regression</span>(outcome, prediction, <span class="at">m =</span> m),</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>                          new_prediction))</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="fu">rbind</span>(by_hand, package)</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt;         prediction     lower     upper</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; by_hand  0.6077044 0.1450703 0.9411166</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; package  0.6077044 0.1450703 0.9411166</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(by_hand, package)))</span></code></pre></div>
+<p><code>cross_venn_abers_regression()</code> is the Cross Venn-Abers
+regressor (CVAR). For each fold it computes the IVAR point and both
+bounds from that fold’s model, with the moderation applied within the
+fold. It then averages the points, the lower bounds and the upper bounds
+separately, with equal weight per fold. Petej and Vovk (2026) state that
+cross regressors no longer satisfy formal validity properties; the
+averaged bounds are a summary of the fold bounds.</p>
+</div>
+<div id="in-practice" class="section level2">
+<h2>In practice</h2>
+<p>The guarantees above are statements about a procedure, not about a
+data frame. <code>vennabers</code> checks the shape of its inputs, but
+it cannot check where the predictions came from. You are responsible
+for:</p>
+<ul>
+<li>training, preprocessing and tuning each model without its
+calibration rows;</li>
+<li>scoring new cases with the same model, or for Cross with each fold
+model;</li>
+<li>keeping final assessment data outside training, selection and
+calibration.</li>
+</ul>
+<p>The tidymodels workflows in
+<code>vignette(&quot;workflows&quot;, package = &quot;vennabers&quot;)</code> create these
+data roles for you.
+<code>vignette(&quot;diagnostics&quot;, package = &quot;vennabers&quot;)</code> shows how to
+assess calibration on held-out data, where a property such as <span class="math inline">\(E(Y \mid P) = P\)</span> can actually be
+examined.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>Manokhin, V. (2017). Multi-class probabilistic classification using
+inductive and cross Venn-Abers predictors. <em>Proceedings of the Sixth
+Workshop on Conformal and Probabilistic Prediction and
+Applications</em>, PMLR 60, 228–240. <a href="https://proceedings.mlr.press/v60/manokhin17a.html" class="uri">https://proceedings.mlr.press/v60/manokhin17a.html</a></p>
+<p>Petej, I. and Vovk, V. (2026). Inductive Venn-Abers and related
+regressors. <em>arXiv preprint</em> 2605.06646. <a href="doi:10.48550/arXiv.2605.06646" class="uri">doi:10.48550/arXiv.2605.06646</a></p>
+<p>Platt, J. C. (2000). Probabilities for SV machines. In A. J. Smola,
+P. L. Bartlett, B. Schölkopf and D. Schuurmans (Eds.), <em>Advances in
+Large Margin Classifiers</em>, 61–74. MIT Press.</p>
+<p>Price, D., Knerr, S., Personnaz, L. and Dreyfus, G. (1995). Pairwise
+neural network classifiers with probabilistic outputs. <em>Advances in
+Neural Information Processing Systems 7</em>, 1109–1116. MIT Press.</p>
+<p>Vovk, V., Gammerman, A. and Shafer, G. (2022). <em>Algorithmic
+Learning in a Random World</em> (2nd ed.). Springer. <a href="doi:10.1007/978-3-031-06649-8" class="uri">doi:10.1007/978-3-031-06649-8</a></p>
+<p>Vovk, V. and Petej, I. (2014). Venn-Abers predictors. <em>Proceedings
+of the Thirtieth Conference on Uncertainty in Artificial
+Intelligence</em>, 829–838. <a href="doi:10.48550/arXiv.1211.0025" class="uri">doi:10.48550/arXiv.1211.0025</a></p>
+<p>Vovk, V., Petej, I. and Fedorova, V. (2015). Large-scale
+probabilistic predictors with and without guarantees of validity.
+<em>Advances in Neural Information Processing Systems 28</em>, 892–900.
+<a href="doi:10.48550/arXiv.1511.00213" class="uri">doi:10.48550/arXiv.1511.00213</a></p>
+<p>Zadrozny, B. and Elkan, C. (2002). Transforming classifier scores
+into accurate multiclass probability estimates. <em>Proceedings of the
+Eighth ACM SIGKDD International Conference on Knowledge Discovery and
+Data Mining</em>, 694–699. <a href="doi:10.1145/775047.775151" class="uri">doi:10.1145/775047.775151</a></p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

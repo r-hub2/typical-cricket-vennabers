@@ -1,0 +1,63 @@
+{
+  "commit": "0e7b4bc575ce230134576ba1c76688d46bf99ac7",
+  "module_sha256": "ea7816e8832eef3f0fa129d2bb80dffae4efcb785f37f083fc087136edb720a5",
+  "release_sdist_sha256": "a6bf5383e618ce42d0ecb2335bba0d6b104ecbe979041f10019b57572364bc69",
+  "python": "3.14.6",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "versions": {
+    "venn-abers": "1.5.4",
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0"
+  },
+  "cases": [
+    "unequal",
+    "crossing_pair",
+    "singletons",
+    "boundaries",
+    "near_knots",
+    "random_001",
+    "random_002",
+    "random_003",
+    "random_004",
+    "random_005",
+    "random_006",
+    "random_007",
+    "random_008",
+    "random_009",
+    "random_010",
+    "random_011",
+    "random_012",
+    "random_013",
+    "random_014",
+    "random_015",
+    "random_016",
+    "random_017",
+    "random_018",
+    "random_019",
+    "random_020"
+  ],
+  "precision": [
+    null,
+    0,
+    2,
+    -1
+  ],
+  "loss": [
+    "log",
+    "brier"
+  ],
+  "rounding_boundaries": {
+    "0.545": 0.55,
+    "0.575": 0.57
+  },
+  "input_sha256": {
+    "cross-calibration.csv": "62efbe6f65b38b33bef0d2f1be10b14ffac4270436d34f9b32631420685895e8",
+    "cross-predictions.csv": "53365c58f1a188a9bde650a70ddd4202c6ff2754ce3bba91c08c02b78efd5d05"
+  },
+  "fixture_sha256": {
+    "binary-options-combined.csv": "b0c6b857b85cc8a142368f31dac654598cc74af5305bf2924425fc043760fc61",
+    "binary-options-folds.csv": "0ac1db75b0e86e2041c2271974cdf47d1e8fdd5021443d00e02a5df0249cb347"
+  }
+}

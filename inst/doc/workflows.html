@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Training and freezing calibrated workflows</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Training and freezing calibrated
+workflows</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#choose-a-learning-path" id="toc-choose-a-learning-path">Choose a learning path</a></li>
+<li><a href="#a-complete-binary-workflow" id="toc-a-complete-binary-workflow">A complete binary workflow</a></li>
+<li><a href="#cross-matched-models-and-full-model-transfer" id="toc-cross-matched-models-and-full-model-transfer">Cross, matched
+models and full-model transfer</a></li>
+<li><a href="#multiclass-calibration-method-versus-model-training" id="toc-multiclass-calibration-method-versus-model-training">Multiclass:
+calibration method versus model training</a></li>
+<li><a href="#regression-workflows" id="toc-regression-workflows">Regression workflows</a></li>
+<li><a href="#frozen-workflows-calibrate-without-retraining" id="toc-frozen-workflows-calibrate-without-retraining">Frozen workflows:
+calibrate without retraining</a></li>
+<li><a href="#learning-a-postprocessor-before-venn-abers" id="toc-learning-a-postprocessor-before-venn-abers">Learning a
+postprocessor before Venn-Abers</a></li>
+<li><a href="#engine-options-and-model-internal-validation" id="toc-engine-options-and-model-internal-validation">Engine options and
+model-internal validation</a></li>
+<li><a href="#names-assessment-and-next-steps" id="toc-names-assessment-and-next-steps">Names, assessment and next
+steps</a></li>
+</ul>
+</div>
+
+<p>The workflow interfaces retain preprocessing, the predictive model
+and the Venn-Abers calibrator together. Choose the entry point based on
+whether the model has already been trained:</p>
+<table>
+<colgroup>
+<col width="38%" />
+<col width="23%" />
+<col width="38%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Starting point</th>
+<th align="left">Function</th>
+<th align="left">What it learns</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Unfitted tidymodels workflow</td>
+<td align="left"><code>calibrated_workflow()</code> followed by
+<code>generics::fit()</code></td>
+<td align="left">Local recipes, models and Inductive or Cross
+calibrators</td>
+</tr>
+<tr class="even">
+<td align="left">Already fitted workflow</td>
+<td align="left"><code>calibrate_workflow()</code></td>
+<td align="left">An Inductive calibrator on new calibration data</td>
+</tr>
+</tbody>
+</table>
+<p>These optional interfaces require <code>parsnip</code>,
+<code>workflows</code>, <code>hardhat</code>, <code>rsample</code>,
+<code>recipes</code>, <code>rlang</code>, <code>tibble</code>,
+<code>withr</code>, <code>generics</code> and <code>tidyselect</code>,
+at the minimum versions in <code>DESCRIPTION</code> or newer supported
+versions. The multiclass examples also use <code>rpart</code>. The
+manual functions in
+<code>vignette(&quot;manual-calibration&quot;, package = &quot;vennabers&quot;)</code> need
+none of these. All examples here use local data and fixed seeds.</p>
+<div id="choose-a-learning-path" class="section level2">
+<h2>Choose a learning path</h2>
+<p>Start with the <a href="#a-complete-binary-workflow">complete binary
+workflow</a>: prepare development data, define the base workflow, fit,
+predict and inspect the result. Then continue with the task you
+need:</p>
+<ul>
+<li><a href="#cross-matched-models-and-full-model-transfer">Cross
+calibration and prediction models</a></li>
+<li><a href="#multiclass-calibration-method-versus-model-training">Multiclass
+training</a> or <a href="#regression-workflows">regression</a></li>
+<li><a href="#frozen-workflows-calibrate-without-retraining">Calibrating
+an already fitted model</a></li>
+<li><a href="#learning-a-postprocessor-before-venn-abers">Learning a
+postprocessor</a></li>
+<li><a href="#engine-options-and-model-internal-validation">Fixed engine
+options and early stopping</a></li>
+<li>Your own fit and predict functions as the model:
+<code>?model_adapter</code> and the installed example
+<code>model-adapter.R</code></li>
+<li>Parameter selection and final assessment in
+<code>vignette(&quot;tuning&quot;, package = &quot;vennabers&quot;)</code></li>
+</ul>
+<p>Keep <code>?calibrated_workflow</code> beside this guide for argument
+defaults. <code>?workflow_training</code>,
+<code>?workflow_postprocessing</code>, <code>?venn_abers_details</code>
+and <code>?venn_abers_tuning</code> hold the detailed contracts for each
+topic.</p>
+</div>
+<div id="a-complete-binary-workflow" class="section level2">
+<h2>A complete binary workflow</h2>
+<p>Hold out assessment data before constructing the procedure. Workflow
+classification needs factor truth; the first level is the binary event
+by default. Set <code>event_level = &quot;second&quot;</code> if the second level
+is your event.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(vennabers)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">12</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rnorm</span>(<span class="dv">240</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>data<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(<span class="fu">runif</span>(<span class="dv">240</span>) <span class="sc">&lt;</span> <span class="fu">plogis</span>(data<span class="sc">$</span>x), <span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>                     <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;yes&quot;</span>, <span class="st">&quot;no&quot;</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>development <span class="ot">&lt;-</span> data[<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>, ]</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>assessment <span class="ot">&lt;-</span> data[<span class="dv">201</span><span class="sc">:</span><span class="dv">240</span>, ]</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>new_data <span class="ot">&lt;-</span> assessment[<span class="st">&quot;x&quot;</span>]</span></code></pre></div>
+<p>Put learned preprocessing inside the <strong>unprepared</strong> base
+recipe. Do not normalize or impute the entire development set first: the
+calibration rows must be excluded from learning those quantities
+too.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>recipe <span class="ot">&lt;-</span> recipes<span class="sc">::</span><span class="fu">recipe</span>(truth <span class="sc">~</span> x, <span class="at">data =</span> development) <span class="sc">|&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  recipes<span class="sc">::</span><span class="fu">step_impute_median</span>(recipes<span class="sc">::</span><span class="fu">all_numeric_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  recipes<span class="sc">::</span><span class="fu">step_normalize</span>(recipes<span class="sc">::</span><span class="fu">all_numeric_predictors</span>())</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_recipe</span>(recipe) <span class="sc">|&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">logistic_reg</span>(<span class="at">engine =</span> <span class="st">&quot;glm&quot;</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>spec <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="at">outcome =</span> <span class="st">&quot;truth&quot;</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>                            <span class="at">calibration_prop =</span> .<span class="dv">3</span>, <span class="at">seed =</span> <span class="dv">42</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>fitted <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(spec, development)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>probability <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitted, new_data, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="fu">head</span>(probability)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt;   .pred_yes .pred_no</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 1     0.167    0.833</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt; 2     0.597    0.403</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 3     0.714    0.286</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 4     0.235    0.765</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 5     0.286    0.714</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; 6     0.714    0.286</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">predict</span>(fitted, new_data, <span class="at">type =</span> <span class="st">&quot;class&quot;</span>))</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 1</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt;   .pred_class</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt;   &lt;fct&gt;      </span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; 1 no         </span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 2 yes        </span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; 3 yes        </span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 4 no         </span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a><span class="co">#&gt; 5 no         </span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a><span class="co">#&gt; 6 yes</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a><span class="fu">brier_score</span>(assessment<span class="sc">$</span>truth <span class="sc">==</span> <span class="st">&quot;yes&quot;</span>, probability<span class="sc">$</span>.pred_yes)</span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="co">#&gt; [1] 0.1979268</span></span></code></pre></div>
+<p>Here 30% of the development data calibrates the model trained on the
+remaining 70%. The constructor returns a trainable workflow;
+<code>fit()</code> performs the split and learning. Predictions use raw
+predictors and include named <code>.pred_yes</code> and
+<code>.pred_no</code> probability columns. For trainable classification
+workflows, the default prediction type is class, so request
+<code>type = &quot;prob&quot;</code> explicitly.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>details <span class="ot">&lt;-</span> <span class="fu">venn_abers_details</span>(fitted, new_data)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">head</span>(details<span class="sc">$</span>details)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 8</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;     row fold   event_class lower upper probability prediction_model model_source</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;            &lt;chr&gt;       </span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; 1     1 Induc… yes         0     0.2         0.167 matched          Inductive1  </span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; 2     2 Induc… yes         0.5   0.741       0.597 matched          Inductive1  </span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; 3     3 Induc… yes         0.704 0.741       0.714 matched          Inductive1  </span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; 4     4 Induc… yes         0     0.308       0.235 matched          Inductive1  </span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 5     5 Induc… yes         0.167 0.333       0.286 matched          Inductive1  </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 6     6 Induc… yes         0.704 0.741       0.714 matched          Inductive1</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(probability, details<span class="sc">$</span>prediction))</span></code></pre></div>
+<p><code>details$prediction</code> holds final probabilities.
+<code>details$details</code> identifies each calibration fold, event,
+source model and binary bounds. Use <code>loss = &quot;brier&quot;</code> in
+<code>predict()</code> or <code>venn_abers_details()</code> to override
+the stored classification loss without learning again. Choosing the loss
+from data still requires separate selection rows.</p>
+</div>
+<div id="cross-matched-models-and-full-model-transfer" class="section level2">
+<h2>Cross, matched models and full-model transfer</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>cross_spec <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">3</span>,</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                                  <span class="at">seed =</span> <span class="dv">42</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>cross_fit <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(cross_spec, development)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">predict</span>(cross_fit, new_data, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;   .pred_yes .pred_no</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 1     0.113    0.887</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 2     0.595    0.405</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 3     0.717    0.283</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 4     0.205    0.795</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 5     0.304    0.696</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; 6     0.772    0.228</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">venn_abers_details</span>(cross_fit, new_data)<span class="sc">$</span>details)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 8</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt;     row fold  event_class lower upper probability prediction_model model_source</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;            &lt;chr&gt;       </span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; 1     1 Fold1 yes         0     0.125       0.111 matched          Fold1       </span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; 2     2 Fold1 yes         0.5   0.667       0.571 matched          Fold1       </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; 3     3 Fold1 yes         0.636 0.7         0.658 matched          Fold1       </span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; 4     4 Fold1 yes         0     0.333       0.25  matched          Fold1       </span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; 5     5 Fold1 yes         0.25  0.375       0.333 matched          Fold1       </span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; 6     6 Fold1 yes         0.636 0.7         0.658 matched          Fold1</span></span></code></pre></div>
+<p>Cross fits one complete base workflow per fold complement. The
+default <code>prediction_model = &quot;matched&quot;</code> retains those same
+workflows for new predictions. <code>v</code> is a Cross option;
+<code>calibration_prop</code> is an Inductive option. For sizes set
+independently, as with sklearn’s
+<code>train_size</code>/<code>test_size</code>, use
+<code>training_size</code> and <code>calibration_size</code>; rows in
+neither set are learned only by a full prediction model (installed
+example <code>inductive-sizes.R</code>). Classification splits are
+stratified by outcome by default; regression splits are
+unstratified.</p>
+<p><code>prediction_model = &quot;full&quot;</code> fits one additional complete
+workflow on the permitted local fit data and uses its predictions with
+the unchanged held-out calibrators. Without postprocessing or tuning,
+matched/full Inductive costs one/two model fits, and matched/full Cross
+with K folds costs K/K+1 fits. Full mode retains only the additional
+prediction model. This transfer does not automatically inherit
+split-calibration guarantees.</p>
+<p>Automatic splitting cannot undo leakage from earlier feature
+engineering or parameter selection. For prescribed splits, pass a local
+<code>rsplit</code> (Inductive), an unrepeated <code>rset</code>
+(Cross), or a function <code>splits = function(data) ...</code>.
+Provider functions must build plans from their argument, because outer
+resampling and tuning give them different local rows. Explicit plans
+cannot be combined with explicit <code>calibration_prop</code>,
+<code>v</code> or <code>strata</code>; see
+<code>?local_calibration_splits</code> for reusable prepared plans.</p>
+</div>
+<div id="multiclass-calibration-method-versus-model-training" class="section level2">
+<h2>Multiclass: calibration method versus model training</h2>
+<p>OvO/OvR selects how probabilities are calibrated. Separately,
+<code>model_training = &quot;shared&quot;</code> uses one multiclass model per
+training split; <code>model_training = &quot;pairwise&quot;</code> trains separate
+two-class models and is available only for OvO. Shared OvO does not
+train pairwise models.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">33</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>iris_split <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">initial_split</span>(iris, <span class="at">prop =</span> .<span class="dv">8</span>, <span class="at">strata =</span> Species)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>iris_dev <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">analysis</span>(iris_split)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>iris_test <span class="ot">&lt;-</span> rsample<span class="sc">::</span><span class="fu">assessment</span>(iris_split)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>tree <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_formula</span>(Species <span class="sc">~</span> .) <span class="sc">|&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">decision_tree</span>(<span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>                                             <span class="at">engine =</span> <span class="st">&quot;rpart&quot;</span>))</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="cf">for</span> (classification <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;ovo&quot;</span>, <span class="st">&quot;ovr&quot;</span>)) {</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  multi_fit <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(tree, <span class="st">&quot;Species&quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    <span class="at">classification =</span> classification, <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">3</span>, <span class="at">seed =</span> <span class="dv">33</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>    generics<span class="sc">::</span><span class="fu">fit</span>(iris_dev)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">predict</span>(multi_fit, iris_test, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>), <span class="dv">2</span>))</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>}</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 × 3</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;   .pred_setosa .pred_versicolor .pred_virginica</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;          &lt;dbl&gt;            &lt;dbl&gt;           &lt;dbl&gt;</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; 1        0.878           0.0610          0.0615</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; 2        0.878           0.0610          0.0615</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; # A tibble: 2 × 3</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;   .pred_setosa .pred_versicolor .pred_virginica</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt;          &lt;dbl&gt;            &lt;dbl&gt;           &lt;dbl&gt;</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 1        0.874           0.0638          0.0624</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 2        0.874           0.0638          0.0624</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a>pair_fit <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(tree, <span class="st">&quot;Species&quot;</span>, <span class="at">classification =</span> <span class="st">&quot;ovo&quot;</span>,</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>  <span class="at">model_training =</span> <span class="st">&quot;pairwise&quot;</span>, <span class="at">seed =</span> <span class="dv">33</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a>  generics<span class="sc">::</span><span class="fu">fit</span>(iris_dev)</span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">venn_abers_details</span>(pair_fit, iris_test)<span class="sc">$</span>details)</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 13</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt;     row pair_id fold  method event_class class_1 class_2 lower upper probability</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; 1     1 pair_1  Indu… ovo    versicolor  setosa  versic…     0 0.111         0.1</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="co">#&gt; 2     2 pair_1  Indu… ovo    versicolor  setosa  versic…     0 0.111         0.1</span></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a><span class="co">#&gt; 3     3 pair_1  Indu… ovo    versicolor  setosa  versic…     0 0.111         0.1</span></span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a><span class="co">#&gt; 4     4 pair_1  Indu… ovo    versicolor  setosa  versic…     0 0.111         0.1</span></span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a><span class="co">#&gt; 5     5 pair_1  Indu… ovo    versicolor  setosa  versic…     0 0.111         0.1</span></span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a><span class="co">#&gt; 6     6 pair_1  Indu… ovo    versicolor  setosa  versic…     0 0.111         0.1</span></span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="co">#&gt; # ℹ 3 more variables: model_training &lt;chr&gt;, prediction_model &lt;chr&gt;,</span></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="co">#&gt; #   model_source &lt;chr&gt;</span></span></code></pre></div>
+<p>Both paths produce final class probabilities. Diagnostics describe
+binary class pairs or classes against the rest; they are not multiclass
+intervals. Shared Cross uses a common fold plan; pairwise Cross creates
+plans within each class pair. A global multiclass plan is not a valid
+pair-specific plan.</p>
+</div>
+<div id="regression-workflows" class="section level2">
+<h2>Regression workflows</h2>
+<p>Mode comes from the base model. A numeric outcome, including numeric
+0/1, remains regression. Omit classification-only options such as
+<code>classification</code>, <code>event_level</code>,
+<code>precision</code> and <code>loss</code>, including their explicit
+defaults.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">52</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>regression <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> <span class="fu">rnorm</span>(<span class="dv">240</span>))</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>regression<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> regression<span class="sc">$</span>x <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="dv">240</span>, <span class="at">sd =</span> .<span class="dv">7</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>reg_base <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_formula</span>(truth <span class="sc">~</span> x) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(parsnip<span class="sc">::</span><span class="fu">linear_reg</span>(<span class="at">engine =</span> <span class="st">&quot;lm&quot;</span>))</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>reg_fit <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(reg_base, <span class="st">&quot;truth&quot;</span>, <span class="at">method =</span> <span class="st">&quot;cross&quot;</span>, <span class="at">v =</span> <span class="dv">3</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>                               <span class="at">m =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">52</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  generics<span class="sc">::</span><span class="fu">fit</span>(regression[<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>, ])</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">predict</span>(reg_fit, regression[<span class="dv">201</span><span class="sc">:</span><span class="dv">240</span>, <span class="st">&quot;x&quot;</span>, <span class="at">drop =</span> <span class="cn">FALSE</span>]))</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 1</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;    .pred</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt;    &lt;dbl&gt;</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 1  0.282</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; 2 -1.62 </span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 3  1.49 </span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 4 -0.590</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 5  1.81 </span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; 6 -0.723</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">venn_abers_details</span>(reg_fit, regression[<span class="dv">201</span><span class="sc">:</span><span class="dv">240</span>, ])<span class="sc">$</span>aggregate)</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 5</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt;     row  lower    upper prediction_model model_source</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt;  &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;            &lt;list&gt;      </span></span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a><span class="co">#&gt; 1     1 -0.247  1.03    matched          &lt;chr [3]&gt;   </span></span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a><span class="co">#&gt; 2     2 -2.67  -1.07    matched          &lt;chr [3]&gt;   </span></span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a><span class="co">#&gt; 3     3  1.05   3.12    matched          &lt;chr [3]&gt;   </span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a><span class="co">#&gt; 4     4 -1.52   0.239   matched          &lt;chr [3]&gt;   </span></span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a><span class="co">#&gt; 5     5  1.78   4.63    matched          &lt;chr [3]&gt;   </span></span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a><span class="co">#&gt; 6     6 -1.59   0.00637 matched          &lt;chr [3]&gt;</span></span></code></pre></div>
+<p>Use the default <code>method = &quot;inductive&quot;</code> for IVAR. Each
+calibration fold must have at least three rows for <code>m = 1</code>,
+or enough rows for the requested <code>m</code> or <code>epsilon</code>.
+Cross returns <code>.pred</code> points and, through details,
+descriptive mean bounds. <code>epsilon</code> is moderation, not an
+interval error rate. Neither regression mode provides confidence or
+prediction intervals.</p>
+</div>
+<div id="frozen-workflows-calibrate-without-retraining" class="section level2">
+<h2>Frozen workflows: calibrate without retraining</h2>
+<p>Suppose a workflow was fitted earlier and its complete prediction
+path must remain fixed. Supply fresh calibration data to
+<code>calibrate_workflow()</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>earlier <span class="ot">&lt;-</span> generics<span class="sc">::</span><span class="fu">fit</span>(base, development[<span class="dv">1</span><span class="sc">:</span><span class="dv">120</span>, ])</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>frozen <span class="ot">&lt;-</span> <span class="fu">calibrate_workflow</span>(earlier, development[<span class="dv">121</span><span class="sc">:</span><span class="dv">200</span>, ], <span class="at">outcome =</span> <span class="st">&quot;truth&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">predict</span>(frozen, new_data, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt;   .pred_yes .pred_no</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; 1    0.0833    0.917</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 2    0.549     0.451</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 3    0.722     0.278</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; 4    0.286     0.714</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 5    0.429     0.571</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; 6    0.722     0.278</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">venn_abers_details</span>(frozen, new_data)<span class="sc">$</span>details)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 6</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt;     row fold       event_class lower  upper probability</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;      &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;       &lt;dbl&gt;</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; 1     1 Inductive1 yes         0     0.0909      0.0833</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; 2     2 Inductive1 yes         0.464 0.652       0.549 </span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 3     3 Inductive1 yes         0.706 0.765       0.722 </span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 4     4 Inductive1 yes         0     0.4         0.286 </span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt; 5     5 Inductive1 yes         0.333 0.5         0.429 </span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 6     6 Inductive1 yes         0.706 0.765       0.722</span></span></code></pre></div>
+<p>Only the calibrator learns. The retained recipe, engine and any
+existing postprocessor are used through the original workflow’s complete
+prediction path. Give it raw data in the learned format; do not pre-bake
+a recipe or pass an extracted engine. Calibration rows must have been
+excluded from all prior training, preprocessing, postprocessing and
+selection. The package cannot verify that history.</p>
+<p>Frozen adoption supports binary, OvO/OvR and regression Inductive
+calibration. For a fitted multiclass workflow, choose
+<code>classification = &quot;ovo&quot;</code> or <code>&quot;ovr&quot;</code>; for
+regression, supply <code>m</code> or <code>epsilon</code> as needed and
+omit classification options. It does not perform Cross calibration,
+full-model transfer or tuning. The result is already fitted and is not
+an input to <code>tune::fit_resamples()</code>.</p>
+<p>Save the complete predictor for later use:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> <span class="fu">tempfile</span>(<span class="at">fileext =</span> <span class="st">&quot;.rds&quot;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">saveRDS</span>(frozen, path)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>restored <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(path)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">predict</span>(frozen, new_data, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>),</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>                    <span class="fu">predict</span>(restored, new_data, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>)))</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="fu">unlink</span>(path)</span></code></pre></div>
+<p>In a new R process, load <code>vennabers</code>,
+<code>workflows</code> and the required engine packages. Pure R engines
+such as this GLM support this round trip; engines holding external
+resources retain their own serialization requirements.</p>
+</div>
+<div id="learning-a-postprocessor-before-venn-abers" class="section level2">
+<h2>Learning a postprocessor before Venn-Abers</h2>
+<p>Trainable workflows can learn an additional postprocessor. The local
+model training domain is split into B for recipe/engine learning and P
+for postprocessing, with C still reserved for Venn-Abers
+calibration:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>sigmoid_fit <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(base, <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">42</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">postprocessing =</span> <span class="fu">list</span>(<span class="at">method =</span> <span class="st">&quot;sigmoid&quot;</span>, <span class="at">strategy =</span> <span class="st">&quot;holdout&quot;</span>, <span class="at">prop =</span> .<span class="dv">3</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                        <span class="at">sigmoid_input =</span> <span class="st">&quot;probability&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  generics<span class="sc">::</span><span class="fu">fit</span>(development)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">predict</span>(sigmoid_fit, new_data, <span class="at">type =</span> <span class="st">&quot;prob&quot;</span>))</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;   .pred_yes .pred_no</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 1     0.111    0.889</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 2     0.593    0.407</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 3     0.696    0.304</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; 4     0.167    0.833</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt; 5     0.273    0.727</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; 6     0.696    0.304</span></span></code></pre></div>
+<p>Here <code>prop</code> reserves 30% of the local training domain for
+P, not 30% of the entire development data. Sigmoid supports binary and
+pairwise OvO workflows; <code>sigmoid_input = &quot;glm_link&quot;</code> selects
+binomial GLM logit inputs instead.</p>
+<p>Other fixed methods are <code>tailor_logistic</code> (binary,
+pairwise OvO or shared two-class models),
+<code>tailor_multinomial</code> (shared OvO/OvR with at least three
+classes), and <code>tailor_linear</code> or
+<code>isotonic_numeric</code> (regression). Tailor methods need
+<code>tailor</code> and <code>probably</code>; Sigmoid and reference
+isotonic do not. Tailor’s multinomial P fit has a fixed 100-iteration
+limit and fails the composition if it does not converge; changing the B
+engine’s <code>maxit</code> does not change that limit.</p>
+<p>With <code>strategy = &quot;ensemble&quot;, v = 3</code>, omit
+<code>prop</code>: three complete B/P pairs are retained and their
+finished predictions are averaged before VA calibration. Full-model mode
+trains an additional complete B/P composition. See
+<code>?workflow_postprocessing</code> for supported combinations and
+diagnostics.</p>
+</div>
+<div id="engine-options-and-model-internal-validation" class="section level2">
+<h2>Engine options and model-internal validation</h2>
+<p>Fixed model options belong in the base workflow’s model
+specification, as main arguments or <code>parsnip::set_engine()</code>
+arguments. They travel with the base workflow, so every local fit uses
+them on its own rows. <code>calibrated_workflow()</code> and
+<code>fit()</code> take no extra fit arguments, and there is no
+interface for separately supplied validation data.</p>
+<p>An engine’s internal validation, such as native XGBoost early
+stopping, splits its share from the prepared rows of each local fit. A
+recipe in the base workflow is learned on all of those rows first.
+xgboost is not a vennabers dependency, so this chunk is not run:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>spec <span class="ot">&lt;-</span> parsnip<span class="sc">::</span><span class="fu">boost_tree</span>(<span class="at">mode =</span> <span class="st">&quot;classification&quot;</span>, <span class="at">trees =</span> <span class="dv">100</span><span class="dt">L</span>, <span class="at">stop_iter =</span> <span class="dv">10</span><span class="dt">L</span>) <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  parsnip<span class="sc">::</span><span class="fu">set_engine</span>(<span class="st">&quot;xgboost&quot;</span>, <span class="at">validation =</span> <span class="fl">0.2</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>boosted <span class="ot">&lt;-</span> workflows<span class="sc">::</span><span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_formula</span>(truth <span class="sc">~</span> .) <span class="sc">|&gt;</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  workflows<span class="sc">::</span><span class="fu">add_model</span>(spec)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>fitted <span class="ot">&lt;-</span> <span class="fu">calibrated_workflow</span>(boosted, <span class="st">&quot;truth&quot;</span>, <span class="at">seed =</span> <span class="dv">42</span>) <span class="sc">|&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  generics<span class="sc">::</span><span class="fu">fit</span>(development)</span></code></pre></div>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="79%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Local fit</th>
+<th align="left">Rows for learning and internal validation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Inductive or Cross source</td>
+<td align="left">Its analysis rows, or their B with postprocessing;
+never C</td>
+</tr>
+<tr class="even">
+<td align="left">Class pair</td>
+<td align="left">The analysis rows of that pair with its two original
+levels</td>
+</tr>
+<tr class="odd">
+<td align="left">Full1</td>
+<td align="left">All local fit rows (F), or its own B with
+postprocessing</td>
+</tr>
+<tr class="even">
+<td align="left">Search candidate</td>
+<td align="left">Its local training rows; held-out rows stay out</td>
+</tr>
+<tr class="odd">
+<td align="left">Frozen workflow</td>
+<td align="left">None: no base training, only calibration</td>
+</tr>
+</tbody>
+</table>
+<p>P trains only the postprocessor, and outer assessment rows never
+reach a fit. An invalid setting fails the whole fit with its fold, pair
+or B/P context. Internal validation is not an independent assessment of
+the procedure. No support is promised for observation weights, offsets
+or an external <code>eval_set</code>. The installed example
+<code>engine-options.R</code> runs fixed rpart options.</p>
+</div>
+<div id="names-assessment-and-next-steps" class="section level2">
+<h2>Names, assessment and next steps</h2>
+<p>Reserved outcome or class names can be handled with
+<code>venn_abers_schema()</code>: create the schema before training,
+encode data with <code>venn_abers_encode()</code>, build the workflow on
+encoded names, pass the same schema to the constructor, and decode
+results with <code>venn_abers_decode()</code>. A new schema cannot
+rename an already fitted workflow; frozen adoption must retain its
+original schema.</p>
+<p>For unbiased assessment of the complete trainable procedure, resample
+the <strong>outer calibrated workflow</strong>, so preprocessing and
+calibration are relearned inside each outer analysis set. The next
+vignette, <code>vignette(&quot;tuning&quot;, package = &quot;vennabers&quot;)</code>, shows
+native resampling, joint and two-stage selection, and an untouched final
+assessment split.</p>
+<p>For the complete standalone scripts with a contents list, open
+<code>vignette(&quot;examples-workflows&quot;, package = &quot;vennabers&quot;)</code>.
+<code>?vennabers_examples</code> indexes all four example
+collections.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

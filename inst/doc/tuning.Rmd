@@ -1,0 +1,259 @@
+---
+title: "Tuning and assessing the complete procedure"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Tuning and assessing the complete procedure}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+# The code needs optional packages from Suggests; without them it is shown
+# but not run.
+required <- c("parsnip", "workflows", "hardhat", "rsample", "recipes", "rlang",
+              "tibble", "withr", "generics", "tidyselect", "tune", "dials",
+              "yardstick")
+unavailable <- required[!vapply(required, requireNamespace, logical(1),
+                                quietly = TRUE)]
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = FALSE,
+                      eval = length(unavailable) == 0)
+```
+
+```{r missing-packages, eval=length(unavailable) > 0, echo=FALSE, results="asis"}
+cat("> **Note:** The code in this vignette was not run because these",
+    "suggested packages are not installed:",
+    paste0("`", unavailable, "`", collapse = ", "), "\n")
+```
+
+Tuning must preserve the separation between model learning, calibration,
+parameter selection and assessment. `calibrated_workflow()` accepts local Grid
+and Bayes searches for binary, shared OvO/OvR, pairwise OvO and regression
+procedures. This vignette builds on
+`vignette("workflows", package = "vennabers")`; it additionally requires
+`tune`, `dials` and `yardstick`. The deliberately small searches keep the
+examples runnable during a package build; use larger budgets for real work.
+
+## Data roles and search strategies
+
+Reserve final assessment data first. When tuning calibration options, the
+procedure also reserves selection rows S and final-fit rows F **within the
+data supplied to fit**. S chooses calibration settings and never rejoins F.
+Each model search sees only its permitted local training data, excluding its
+VA calibration rows. Outer assessment is excluded from every inner operation.
+
+| Strategy | Model-parameter criterion | Calibration selection |
+|:---------|:--------------------------|:----------------------|
+| `"joint"` | Score complete calibrated predictions | Select the complete procedure |
+| `"two_stage"` | First score the raw model predictions | Then select calibration settings |
+
+Both strategies keep the same data exclusions. Each Cross source model runs
+its own local search. With `prediction_model = "full"`, the additional full
+model runs its own search too; it does not inherit or average fold choices.
+
+```{r data-and-recipe}
+library(vennabers)
+set.seed(19)
+data <- data.frame(x = rnorm(800))
+data$truth <- factor(ifelse(runif(800) < plogis(.5 * data$x),
+                            "yes", "no"), levels = c("yes", "no"))
+set.seed(20)
+split <- rsample::initial_split(data, prop = .8, strata = truth)
+development <- rsample::analysis(split)
+
+recipe <- recipes::recipe(truth ~ x, data = development) |>
+  recipes::step_poly(x, degree = tune::tune("degree"))
+base <- workflows::workflow() |>
+  workflows::add_recipe(recipe) |>
+  workflows::add_model(parsnip::logistic_reg(engine = "glm"))
+
+# Always construct resamples from the supplied local data.
+folds <- function(data) {
+  rsample::vfold_cv(data, v = 2, strata = truth, pool = 0)
+}
+```
+
+`tune("degree")` names the parameter ID. Grid columns must match these IDs,
+which must be unique across recipe, model and calibration settings. The ID
+`id` is reserved by native tune. Never close over the full development data
+inside a resampling callback.
+
+## Joint Grid selection
+
+Tune polynomial degree and the calibration regularization rule. There are
+two model candidates and two calibration candidates. The primary criterion
+here is Brier score for both searches, independent of the candidate loss rule.
+
+```{r joint-grid}
+config <- list(
+  strategy = "joint",
+  selection_prop = .3,
+  model = list(method = "grid", grid = data.frame(degree = c(1L, 2L)),
+               resamples = folds, primary_metric = yardstick::brier_class),
+  calibration = list(method = "grid",
+    grid = data.frame(va_loss = c("log", "brier")),
+    resamples = folds, primary_metric = yardstick::brier_class)
+)
+tuned_spec <- calibrated_workflow(base, "truth", seed = 31,
+  loss = tune::tune("va_loss"), tuning = config)
+joint_fit <- generics::fit(tuned_spec, development)
+choices <- venn_abers_tuning(joint_fit)
+choices$calibration$selected
+choices$models$Inductive1$selected
+c(selection_rows = length(choices$calibration$selection_rows),
+  final_fit_rows = length(choices$calibration$final_rows))
+stopifnot(length(intersect(choices$calibration$selection_rows,
+                           choices$calibration$final_rows)) == 0L)
+```
+
+By default classification searches use log loss (`yardstick::mn_log_loss`);
+regression searches use RMSE. `report_metrics` adds reporting metrics without
+changing the primary selection criterion. If you supply `control_grid()`,
+set `save_pred = TRUE` so candidate completeness can be checked.
+
+`venn_abers_tuning()` returns stored diagnostics without refitting: candidate
+values, scores, eligibility and exclusion reasons, chosen settings, native
+tune results, data roles and fit budgets. Ties use stable candidate order.
+Inspect these records before treating a winning score as evidence.
+
+## Two-stage Grid selection
+
+Reuse the same candidate grids while changing which predictions guide the
+model search:
+
+```{r two-stage-grid}
+two_stage <- config
+two_stage$strategy <- "two_stage"
+two_stage_spec <- calibrated_workflow(base, "truth", seed = 31,
+  loss = tune::tune("va_loss"), tuning = two_stage)
+two_stage_fit <- generics::fit(two_stage_spec, development)
+venn_abers_tuning(two_stage_fit)$models$Inductive1$selected
+venn_abers_tuning(two_stage_fit)$calibration$selected
+```
+
+The first stage now selects the raw model, before postprocessing or VA. The
+second selects calibration. Neither strategy implies that a particular method
+will win on future data. Choose between procedures using outer resampling or
+separate validation, not the final assessment split.
+
+To tune precision as well, use a distinct placeholder such as
+`precision = tune::tune("va_rounding")` and a matching grid column. Precision
+candidates are the strings `"none"`, `"0"`, `"2"` and `"-2"`; `"none"` means no
+rounding. These categorical search values differ from fixed constructor
+values such as `precision = NULL` or `precision = 2`.
+
+## A small Bayes model search
+
+Bayes searches require parameter definitions, positive `initial` and `iter`
+budgets, and more initial candidates than tuned parameters. This model-only
+example leaves calibration settings fixed, so no S/F selection split is
+requested. A joint search still scores the complete calibrated procedure.
+
+```{r bayes}
+bayes_config <- list(
+  strategy = "joint",
+  model = list(
+    method = "bayes", initial = 4L, iter = 1L,
+    param_info = dials::parameters(list(degree = dials::degree_int(c(1L, 6L)))),
+    resamples = folds,
+    control = tune::control_bayes(seed = 4, save_pred = TRUE, uncertain = Inf)
+  )
+)
+bayes_fit <- calibrated_workflow(base, "truth", tuning = bayes_config,
+                                 seed = 31) |>
+  generics::fit(development)
+venn_abers_tuning(bayes_fit)$models$Inductive1$selected
+```
+
+The implementation advances native `tune_bayes()` one step at a time. Only
+complete valid candidates inform the next Gaussian process; failed, dropped
+and repeated proposals still spend iteration budget and count toward
+`no_improve`. `uncertain = Inf` and saved predictions are required. Elapsed-time
+limits are checked between complete steps. With calibration Bayes tuning,
+also supply its `param_info`, resamples and one of `selection_prop` or
+`selection_split`, just as for Grid selection.
+
+## Outer resampling and final assessment
+
+Resample the **unfitted outer specification**, so each analysis split reruns
+the entire tuning, preprocessing, model and calibration procedure. Do not
+calibrate once on all development data before resampling.
+
+```{r outer-resampling}
+set.seed(61)
+outer_folds <- rsample::vfold_cv(development, v = 2, strata = truth, pool = 0)
+evaluation <- tune::fit_resamples(
+  tuned_spec, resamples = outer_folds,
+  metrics = yardstick::metric_set(yardstick::brier_class, yardstick::mn_log_loss),
+  control = tune::control_resamples(save_pred = TRUE,
+                                    pkgs = c("vennabers", "stats"))
+)
+tune::collect_metrics(evaluation)
+tune::collect_notes(evaluation)
+```
+
+Review notes as well as metrics: a summary over only successful folds is not
+a complete evaluation. Fix failed folds before comparing procedures. For
+parallel outer resampling, make sure workers load `vennabers` and the required
+engine namespaces. Inner search parallelism is disabled. Seed outer plans
+separately from the constructor's local `seed`.
+
+Here we preselect the joint Grid specification for demonstration. In an
+application, compare candidate procedures using the outer results, freeze
+that choice, and only then evaluate once on the held-out assessment split:
+
+```{r final-assessment}
+final <- tune::last_fit(
+  tuned_spec, split = split,
+  metrics = yardstick::metric_set(yardstick::brier_class, yardstick::mn_log_loss)
+)
+tune::collect_metrics(final)
+final_workflow <- tune::extract_workflow(final)
+head(predict(final_workflow, rsample::assessment(split)["x"], type = "prob"))
+```
+
+Calibration selection continues to reserve S inside the analysis data; the
+returned predictor fits only on F. Final assessment outcomes do not enter
+either role. `last_fit()` is for a trainable specification, not a frozen
+predictor from `calibrate_workflow()`.
+
+## Extending the same pattern
+
+For **regression**, use `m = tune::tune("moderation")` with a positive-integer
+grid, or `epsilon = tune::tune("moderation")` with values strictly between zero
+and one. Tune exactly one. Every local calibration fold must satisfy
+`1 <= m <= floor((k - 1) / 2)`; epsilon determines m from that local size.
+Invalid candidates are recorded and excluded, not clipped into range. Omit
+classification loss and precision, and use unstratified numeric resampling.
+
+For **shared OvO/OvR**, choose `classification` and a multiclass base model;
+selection scores complete class vectors. **Pairwise OvO** uses local searches
+inside each class pair. Its joint Grid path without postprocessing selects a
+Cartesian grid of pair choices using `joint_resamples` and rejects more than
+4096 combinations. Pairwise Bayes and tuned postprocessing search locally
+instead; see `?venn_abers_tuning` before adapting a shared model plan.
+
+With **postprocessing**, every B training portion runs its own local search,
+excluding P (postprocessor), C (VA calibration), S (selection) and outer
+assessment. Joint scoring evaluates complete compositions; two-stage scoring
+starts from the raw engine. Postprocessing method, input and split strategy
+stay fixed per search. Inspect local search counts and budgets because Cross,
+pairwise training, ensembles and full-model transfer multiply the work.
+
+Runnable larger examples are installed with the package:
+
+```{r further-examples}
+system.file("examples", c("regression-grid.R", "shared-multiclass-grid.R",
+  "pairwise-grid.R", "postprocessing-grid.R", "postprocessing-bayes.R"),
+  package = "vennabers")
+```
+
+For an already fixed classifier, a loss-only Log/Brier comparison does not
+need automatic tuning or a refit: predict both losses on separate validation
+rows, choose there, then pass the chosen `loss` explicitly on untouched
+assessment data. Those validation rows are selection data from then on.
+
+For the complete standalone scripts with a contents list, open
+`vignette("examples-tuning", package = "vennabers")`.
+`?vennabers_examples` indexes all four example collections.
