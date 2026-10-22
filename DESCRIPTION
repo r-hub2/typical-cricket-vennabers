@@ -44,7 +44,7 @@ VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2026-10-22 16:25:24 UTC; entropy
+Packaged: 2026-10-22 16:26:41 UTC; entropy
 Author: René-M. Kruse [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0003-1655-9776>)
 Maintainer: René-M. Kruse <rene.marcel.kruse@protonmail.com>
