@@ -113,6 +113,8 @@ for the installed multinomial example),
 }
 \examples{
 source(system.file("examples", "encoded-binary.R", package = "vennabers"))
-source(system.file("examples", "encoded-multiclass-regression.R", package = "vennabers"))
+# Shared OvO/OvR and regression with Inductive and Cross calibration:
+script <- system.file("examples", "encoded-multiclass-regression.R", package = "vennabers")
+# source(script)
 }
 \seealso{\code{\link{calibrated_workflow}}, \code{\link{local_calibration_splits}}}
